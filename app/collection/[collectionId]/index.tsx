@@ -12,10 +12,10 @@ import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-
 import { useDebounce } from 'use-debounce'
 
 const log = (...args: any[]) => {
-    console.log('[CollectionsScreen] ', ...args)
+    console.log('[CollectionScreen] ', ...args)
 }
 
-export default function CollectionsScreen() {
+export default function CollectionScreen() {
     const { collectionId } = useLocalSearchParams<{ collectionId: string }>()
     const navigation = useNavigation()
 
