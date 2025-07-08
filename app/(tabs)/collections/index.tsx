@@ -10,6 +10,8 @@ import Superwall from '@superwall/react-native-superwall'
 import { useQuery } from '@tanstack/react-query'
 import * as Haptics from 'expo-haptics'
 import { router, useNavigation } from 'expo-router'
+import * as StoreReview from 'expo-store-review'
+import ms from 'ms'
 import { useLayoutEffect, useMemo, useState } from 'react'
 import { Alert, Image, RefreshControl, Text, TouchableOpacity, View } from 'react-native'
 import ContextMenu from 'react-native-context-menu-view'
@@ -21,6 +23,12 @@ const log = (...args: any[]) => {
 export default function CollectionsScreen() {
     const navigation = useNavigation()
     const [searchString, setSearchString] = useState('')
+
+    const countToReviewPrompt = usePersistedStore((state) => state.countToReviewPrompt)
+    const setCountToReviewPrompt = usePersistedStore((state) => state.setCountToReviewPrompt)
+    const lastShownReviewPrompt = usePersistedStore((state) => state.lastShownReviewPrompt)
+    const setLastShownReviewPrompt = usePersistedStore((state) => state.setLastShownReviewPrompt)
+
     const currentConnection = usePersistedStore((state) => state.currentConnection)
     const connections = usePersistedStore((state) => state.connections)
     const removeConnection = usePersistedStore((state) => state.removeConnection)
@@ -246,6 +254,20 @@ export default function CollectionsScreen() {
                     }}
                     onPress={() => {
                         router.push(`/collection/${collection.id}`)
+
+                        if (countToReviewPrompt === 0) {
+                            // make sure at least 1 day has passed
+                            if (
+                                !lastShownReviewPrompt ||
+                                lastShownReviewPrompt < Date.now() - ms('1d')
+                            ) {
+                                setLastShownReviewPrompt(Date.now())
+                                setCountToReviewPrompt(12)
+                                StoreReview.requestReview()
+                            }
+                        } else {
+                            setCountToReviewPrompt(countToReviewPrompt - 1)
+                        }
                     }}
                 >
                     <View style={{ flex: 1, flexDirection: 'row', alignItems: 'center', gap: 8 }}>
