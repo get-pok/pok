@@ -1,0 +1,71 @@
+{
+    "expo": {
+        "name": "POK",
+        "slug": "pok",
+        "version": "1.0.0",
+        "orientation": "portrait",
+        "icon": "./assets/icon.png",
+        "scheme": "pok",
+        "userInterfaceStyle": "dark",
+        "newArchEnabled": true,
+        "ios": {
+            "supportsTablet": true,
+            "config": {
+                "usesNonExemptEncryption": false
+            },
+            "infoPlist": {
+                "NSAppTransportSecurity": {
+                    "NSAllowsArbitraryLoads": true
+                },
+                "SKIncludeConsumableInAppPurchaseHistory": true
+            }
+        },
+        "plugins": [
+            "expo-router",
+            [
+                "expo-splash-screen",
+                {
+                    "image": "./assets/icon.png",
+                    "resizeMode": "contain",
+                    "backgroundColor": "#181A1B",
+                    "imageWidth": 200
+                }
+            ],
+            [
+                "react-native-edge-to-edge",
+                {
+                    "android": {
+                        "parentTheme": "Material3.Dynamic",
+                        "enforceNavigationBarContrast": false
+                    }
+                }
+            ],
+            [
+                "expo-build-properties",
+                {
+                    "ios": {
+                        "networkInspector": false
+                    },
+                    "android": { "usesCleartextTraffic": true }
+                }
+            ],
+            "./plugins/withEdgeToEdgeFix",
+            [
+                "@sentry/react-native/expo",
+                {
+                    "url": "https://sentry.io/",
+                    "project": "pok",
+                    "organization": "ff-global"
+                }
+            ]
+        ],
+        "experiments": {
+            "typedRoutes": true
+        },
+        "extra": {
+            "router": {
+                "origin": false
+            }
+        }
+    }
+}
