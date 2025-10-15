@@ -1,4 +1,4 @@
-import ActivityIndicator from '@/components/base/ActivityIndicator'
+import buildPlaceholder from '@/components/base/Placeholder'
 import Text from '@/components/base/Text'
 import { LEVEL_COLORS, LEVEL_LABELS } from '@/lib/constants'
 import getClient from '@/lib/pb'
@@ -76,34 +76,28 @@ export default function LogScreen() {
         return { mainFields, dataFields }
     }, [log])
 
-    if (logQuery.isLoading) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator />
-            </View>
-        )
-    }
-
-    if (logQuery.error) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ color: COLORS.danger }}>Error: {logQuery.error.message}</Text>
-            </View>
-        )
-    }
-
-    if (!log) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ color: COLORS.text }}>Log not found</Text>
-            </View>
-        )
-    }
-
     const formatValue = (value: any): string => {
         if (value === null || value === undefined) return ''
         if (typeof value === 'object') return JSON.stringify(value, null, 2)
         return String(value)
+    }
+
+    const Placeholder = useMemo(() => {
+        return buildPlaceholder({
+            isLoading: logQuery.isLoading,
+            isError: logQuery.isError,
+            hasData: !!log,
+            emptyLabel: 'Log not found',
+            errorLabel: 'Error fetching log',
+        })
+    }, [logQuery.isLoading, logQuery.isError, log])
+
+    if (Placeholder) {
+        return (
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
+                {Placeholder}
+            </View>
+        )
     }
 
     return (
