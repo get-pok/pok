@@ -1,3 +1,6 @@
+import buildPlaceholder from '@/components/Placeholder'
+import RefreshControl from '@/components/RefreshControl'
+import Text from '@/components/Text'
 import getClient from '@/lib/pb'
 import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
@@ -15,9 +18,7 @@ import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import {
     ActivityIndicator,
     Alert,
-    RefreshControl,
     ScrollView,
-    Text,
     TextInput,
     TouchableOpacity,
     View,
@@ -116,6 +117,12 @@ export default function RecordScreen() {
                         Object.entries(record!).filter(([key]) => !filteredFields.includes(key))
                     )
                 )
+                .catch((error) => {
+                    if (error?.response?.data) {
+                        throw new Error(JSON.stringify(error.response.data, null, 2))
+                    }
+                    throw new Error(JSON.stringify(error, null, 2))
+                })
             return createdRecord.id
         },
         onSuccess: (newRecordId) => {
@@ -173,6 +180,18 @@ export default function RecordScreen() {
         duplicateRecordMutation.isPending,
     ])
 
+    const Placeholder = useMemo(() => {
+        const emptyRecord = buildPlaceholder({
+            isLoading: recordQuery.isLoading,
+            isError: recordQuery.isError,
+            hasData: !!record,
+            emptyLabel: 'Record not found',
+            errorLabel: 'Error fetching record',
+        })
+
+        return emptyRecord
+    }, [recordQuery.isLoading, recordQuery.isError, record])
+
     useEffect(() => {
         if (record) {
             // @ts-ignore
@@ -210,16 +229,20 @@ export default function RecordScreen() {
                             actions={[
                                 {
                                     title: 'Close',
+                                    systemIcon: 'xmark',
                                 },
                                 {
                                     title: 'Copy Raw JSON',
+                                    systemIcon: 'doc.text',
                                 },
                                 {
                                     title: 'Duplicate',
+                                    systemIcon: 'plus',
                                 },
                                 {
                                     title: 'Delete',
                                     destructive: true,
+                                    systemIcon: 'trash',
                                 },
                             ]}
                             onPress={(e) => {
@@ -314,34 +337,15 @@ export default function RecordScreen() {
         duplicateRecordMutation.mutate,
     ])
 
-    if (recordQuery.isLoading) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color={COLORS.info} />
-            </View>
-        )
-    }
-
-    if (recordQuery.error) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ color: COLORS.danger }}>Error: {recordQuery.error.message}</Text>
-            </View>
-        )
-    }
-
-    if (!record) {
-        return (
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <Text style={{ color: COLORS.text }}>Record not found</Text>
-            </View>
-        )
+    // pleasing compiler
+    if (Placeholder || !record) {
+        return Placeholder
     }
 
     return (
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
-            contentContainerStyle={{ gap: 16 }}
+            contentContainerStyle={{ paddingBottom: 140 }}
             refreshControl={
                 <RefreshControl
                     refreshing={recordQuery.isFetching}
@@ -356,14 +360,9 @@ export default function RecordScreen() {
 
                 if (field.name === 'id') {
                     return (
-                        <View
+                        <Field
                             key={field.id}
-                            style={{
-                                flexDirection: 'column',
-                                gap: 10,
-                                padding: 20,
-                                backgroundColor: fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined,
-                            }}
+                            backgroundColor={fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined}
                         >
                             <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: 'bold' }}>
                                 {field.name}
@@ -394,20 +393,15 @@ export default function RecordScreen() {
                                     {copiedFields[field.name] ? 'Copied!' : fieldValue}
                                 </Text>
                             </TouchableOpacity>
-                        </View>
+                        </Field>
                     )
                 }
 
                 if (field.type === 'file') {
                     return (
-                        <View
+                        <Field
                             key={field.id}
-                            style={{
-                                flexDirection: 'column',
-                                gap: 10,
-                                padding: 20,
-                                backgroundColor: fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined,
-                            }}
+                            backgroundColor={fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined}
                         >
                             <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: 'bold' }}>
                                 {field.name}
@@ -449,20 +443,15 @@ export default function RecordScreen() {
                                     {copiedFields[field.name] ? 'Copied!' : fieldValue}
                                 </Text>
                             </TouchableOpacity>
-                        </View>
+                        </Field>
                     )
                 }
 
                 if (field.type === 'select') {
                     return (
-                        <View
+                        <Field
                             key={field.id}
-                            style={{
-                                flexDirection: 'column',
-                                gap: 10,
-                                padding: 20,
-                                backgroundColor: fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined,
-                            }}
+                            backgroundColor={fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined}
                         >
                             <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: 'bold' }}>
                                 {field.name}
@@ -502,20 +491,15 @@ export default function RecordScreen() {
                                     )
                                 })}
                             </View>
-                        </View>
+                        </Field>
                     )
                 }
 
                 if (field.type === 'bool') {
                     return (
-                        <View
+                        <Field
                             key={field.id}
-                            style={{
-                                flexDirection: 'column',
-                                gap: 10,
-                                padding: 20,
-                                backgroundColor: fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined,
-                            }}
+                            backgroundColor={fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined}
                         >
                             <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: 'bold' }}>
                                 {field.name}
@@ -544,19 +528,14 @@ export default function RecordScreen() {
                                     {editableRecord[field.name] ? 'True' : 'False'}
                                 </Text>
                             </View>
-                        </View>
+                        </Field>
                     )
                 }
 
                 return (
-                    <View
+                    <Field
                         key={field.id}
-                        style={{
-                            flexDirection: 'column',
-                            gap: 10,
-                            padding: 20,
-                            backgroundColor: fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined,
-                        }}
+                        backgroundColor={fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined}
                     >
                         <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: 'bold' }}>
                             {field.name}
@@ -583,9 +562,31 @@ export default function RecordScreen() {
                             placeholderTextColor={COLORS.textMuted}
                             multiline={fieldValue?.length > 100}
                         />
-                    </View>
+                    </Field>
                 )
             })}
         </ScrollView>
+    )
+}
+
+function Field({
+    children,
+    backgroundColor,
+}: { children: React.ReactNode; backgroundColor?: string }) {
+    return (
+        <View
+            style={{
+                flexDirection: 'column',
+                gap: 10,
+                padding: 20,
+                paddingTop: 10,
+                paddingBottom: 14,
+                borderBottomWidth: 1,
+                borderBottomColor: COLORS.hr,
+                backgroundColor,
+            }}
+        >
+            {children}
+        </View>
     )
 }

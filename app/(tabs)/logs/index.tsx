@@ -1,4 +1,6 @@
-import EmptyListComponent from '@/components/EmptyListComponent'
+import buildPlaceholder from '@/components/Placeholder'
+import RefreshControl from '@/components/RefreshControl'
+import Text from '@/components/Text'
 import getClient from '@/lib/pb'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
@@ -8,7 +10,7 @@ import { useQuery } from '@tanstack/react-query'
 import * as Haptics from 'expo-haptics'
 import { router, useNavigation } from 'expo-router'
 import { useLayoutEffect, useMemo, useState } from 'react'
-import { Alert, RefreshControl, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, TouchableOpacity, View } from 'react-native'
 import { useDebounce } from 'use-debounce'
 
 const log = (...args: any[]) => {
@@ -53,17 +55,17 @@ export default function LogsScreen() {
         return logsQuery.data || []
     }, [logsQuery.data])
 
-    const emptyListComponent = useMemo(() => {
-        const emptyLogs = EmptyListComponent({
+    const Placeholder = useMemo(() => {
+        const emptyLogs = buildPlaceholder({
             isLoading: logsQuery.isLoading,
-            hasValue: logs.length > 0,
+            hasData: logs.length > 0,
             emptyLabel: 'No logs found',
-            error: logsQuery.error,
+            isError: logsQuery.isError,
             errorLabel: 'Failed to fetch logs',
         })
 
         return emptyLogs
-    }, [logsQuery.isLoading, logsQuery.error, logs.length])
+    }, [logsQuery.isLoading, logsQuery.isError, logs.length])
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -83,24 +85,22 @@ export default function LogsScreen() {
             contentInsetAdjustmentBehavior="automatic"
             refreshControl={
                 <RefreshControl
-                    tintColor={COLORS.info}
-                    refreshing={logsQuery.isRefetching}
-                    onRefresh={logsQuery.refetch}
-                    // android
-                    progressBackgroundColor={COLORS.bgLevel1}
-                    colors={[COLORS.info]}
+                    refreshing={logsQuery.isFetching}
+                    onRefresh={() => {
+                        logsQuery.refetch()
+                    }}
                 />
             }
             showsVerticalScrollIndicator={false}
             data={logs}
             overrideProps={
-                emptyListComponent && {
+                Placeholder && {
                     contentContainerStyle: {
                         flex: 1,
                     },
                 }
             }
-            ListEmptyComponent={emptyListComponent}
+            ListEmptyComponent={Placeholder}
             renderItem={({ item: log, index: logIndex }) => (
                 <TouchableOpacity
                     style={{
@@ -140,7 +140,6 @@ export default function LogsScreen() {
                                 fontWeight: 600,
                                 marginBottom: 4,
                             }}
-                            numberOfLines={1}
                         >
                             {log.message}
                         </Text>

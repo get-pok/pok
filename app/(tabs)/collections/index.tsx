@@ -1,4 +1,6 @@
-import EmptyListComponent from '@/components/EmptyListComponent'
+import buildPlaceholder from '@/components/Placeholder'
+import RefreshControl from '@/components/RefreshControl'
+import Text from '@/components/Text'
 import getClient from '@/lib/pb'
 import { invalidateCurrentConnection, queryClient } from '@/lib/query'
 import { storage } from '@/lib/storage'
@@ -13,7 +15,7 @@ import { router, useNavigation } from 'expo-router'
 import * as StoreReview from 'expo-store-review'
 import ms from 'ms'
 import { useLayoutEffect, useMemo, useState } from 'react'
-import { Alert, Image, RefreshControl, Text, TouchableOpacity, View } from 'react-native'
+import { Alert, Image, TouchableOpacity, View } from 'react-native'
 import ContextMenu from 'react-native-context-menu-view'
 
 const log = (...args: any[]) => {
@@ -75,17 +77,17 @@ export default function CollectionsScreen() {
         [collectionsQuery.data, searchString]
     )
 
-    const emptyListComponent = useMemo(() => {
-        const emptyCollections = EmptyListComponent({
+    const Placeholder = useMemo(() => {
+        const emptyCollections = buildPlaceholder({
             isLoading: collectionsQuery.isLoading,
-            hasValue: filteredCollections.length > 0,
+            hasData: filteredCollections.length > 0,
             emptyLabel: 'No collections found',
-            error: collectionsQuery.error,
+            isError: collectionsQuery.isError,
             errorLabel: 'Failed to fetch collections',
         })
 
         return emptyCollections
-    }, [collectionsQuery.isLoading, collectionsQuery.error, filteredCollections.length])
+    }, [collectionsQuery.isLoading, collectionsQuery.isError, filteredCollections.length])
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -104,7 +106,7 @@ export default function CollectionsScreen() {
                                     disabled: connection.id === currentConnection?.id,
                                 },
                                 {
-                                    title: 'Remove Connection',
+                                    title: 'Remove',
                                     systemIcon: 'trash',
                                     destructive: true,
                                 },
@@ -160,6 +162,11 @@ export default function CollectionsScreen() {
 
                         if (e.nativeEvent.name === 'Add Connection') {
                             if (__DEV__) {
+                                router.push('/login')
+                                return
+                            }
+
+                            if (connections.length < 2) {
                                 router.push('/login')
                                 return
                             }
@@ -225,24 +232,22 @@ export default function CollectionsScreen() {
             contentInsetAdjustmentBehavior="automatic"
             refreshControl={
                 <RefreshControl
-                    tintColor={COLORS.info}
-                    refreshing={collectionsQuery.isRefetching}
-                    onRefresh={collectionsQuery.refetch}
-                    // android
-                    progressBackgroundColor={COLORS.bgLevel1}
-                    colors={[COLORS.info]}
+                    refreshing={collectionsQuery.isFetching}
+                    onRefresh={() => {
+                        collectionsQuery.refetch()
+                    }}
                 />
             }
             showsVerticalScrollIndicator={false}
             data={filteredCollections}
             overrideProps={
-                emptyListComponent && {
+                Placeholder && {
                     contentContainerStyle: {
                         flex: 1,
                     },
                 }
             }
-            ListEmptyComponent={emptyListComponent}
+            ListEmptyComponent={Placeholder}
             renderItem={({ item: collection, index: collectionIndex }) => (
                 <TouchableOpacity
                     style={{

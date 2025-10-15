@@ -1,4 +1,6 @@
-import EmptyListComponent from '@/components/EmptyListComponent'
+import buildPlaceholder from '@/components/Placeholder'
+import RefreshControl from '@/components/RefreshControl'
+import Text from '@/components/Text'
 import { formatBytes } from '@/lib/format'
 import getClient from '@/lib/pb'
 import { COLORS } from '@/theme/colors'
@@ -7,15 +9,7 @@ import { FlashList } from '@shopify/flash-list'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigation } from 'expo-router'
 import { useLayoutEffect, useMemo, useState } from 'react'
-import {
-    ActivityIndicator,
-    Alert,
-    Linking,
-    RefreshControl,
-    Text,
-    TouchableOpacity,
-    View,
-} from 'react-native'
+import { ActivityIndicator, Alert, Linking, TouchableOpacity, View } from 'react-native'
 import ContextMenu from 'react-native-context-menu-view'
 
 const log = (...args: any[]) => {
@@ -39,7 +33,7 @@ export default function BackupsScreen() {
         mutationFn: async (name: string) => {
             const pb = await getClient()
             Alert.alert('Creating Backup', 'This may take a while...')
-            await pb.backups.create(`${name}.zip`)
+            await pb.backups.create(`${name.endsWith('.zip') ? name : `${name}.zip`}`)
         },
         onSuccess: () => {
             backupsQuery.refetch()
@@ -64,6 +58,9 @@ export default function BackupsScreen() {
         mutationFn: async (key: string) => {
             const pb = await getClient()
             await pb.backups.delete(key)
+        },
+        onSuccess: () => {
+            backupsQuery.refetch()
         },
         onError: (error) => {
             Alert.alert('Error', error.message)
@@ -93,63 +90,66 @@ export default function BackupsScreen() {
         [backupsQuery.data, searchString]
     )
 
-    const emptyListComponent = useMemo(() => {
-        const emptyBackups = EmptyListComponent({
+    const Placeholder = useMemo(() => {
+        const emptyBackups = buildPlaceholder({
             isLoading: backupsQuery.isLoading,
-            hasValue: filteredBackups.length > 0,
+            hasData: filteredBackups.length > 0,
             emptyLabel: 'No backups found',
-            error: backupsQuery.error,
+            isError: backupsQuery.isError,
             errorLabel: 'Failed to fetch backups',
         })
 
         return emptyBackups
-    }, [backupsQuery.isLoading, backupsQuery.error, filteredBackups.length])
+    }, [backupsQuery.isLoading, backupsQuery.isError, filteredBackups.length])
 
     useLayoutEffect(() => {
         navigation.setOptions({
-            headerRight: createBackupMutation.isPending
-                ? () => (
-                      <ActivityIndicator
-                          style={{ marginRight: 10 }}
-                          size="small"
-                          color={COLORS.text}
-                      />
-                  )
-                : () => (
-                      <TouchableOpacity
-                          onPress={() => {
-                              Alert.prompt(
-                                  'Create Backup',
-                                  'Enter a name for your new backup',
-                                  [
-                                      {
-                                          text: 'Cancel',
-                                          style: 'cancel',
-                                      },
-                                      {
-                                          text: 'Create',
-                                          onPress: (text) => {
-                                              if (!text) return
-                                              createBackupMutation.mutate(text)
+            headerRight:
+                createBackupMutation.isPending ||
+                deleteBackupMutation.isPending ||
+                restoreBackupMutation.isPending
+                    ? () => (
+                          <ActivityIndicator
+                              style={{ marginRight: 10 }}
+                              size="small"
+                              color={COLORS.text}
+                          />
+                      )
+                    : () => (
+                          <TouchableOpacity
+                              onPress={() => {
+                                  Alert.prompt(
+                                      'Create Backup',
+                                      'Enter a name for your new backup',
+                                      [
+                                          {
+                                              text: 'Cancel',
+                                              style: 'cancel',
                                           },
-                                      },
-                                  ],
-                                  'plain-text',
-                                  `pok_${new Date().toISOString().split('T')[0].replace(/-/g, '')}${Math.floor(Date.now() / 1000)}`
-                              )
-                          }}
-                          style={{
-                              backgroundColor: COLORS.bgLevel2,
-                              justifyContent: 'center',
-                              alignItems: 'center',
-                              borderRadius: 16,
-                              height: 32,
-                              width: 32,
-                          }}
-                      >
-                          <Ionicons name="add" size={20} color={COLORS.text} />
-                      </TouchableOpacity>
-                  ),
+                                          {
+                                              text: 'Create',
+                                              onPress: (text) => {
+                                                  if (!text) return
+                                                  createBackupMutation.mutate(text)
+                                              },
+                                          },
+                                      ],
+                                      'plain-text',
+                                      `pok_${new Date().toISOString().split('T')[0].replace(/-/g, '')}_${Math.floor(Date.now() / 1000)}`
+                                  )
+                              }}
+                              style={{
+                                  backgroundColor: COLORS.bgLevel2,
+                                  justifyContent: 'center',
+                                  alignItems: 'center',
+                                  borderRadius: 16,
+                                  height: 32,
+                                  width: 32,
+                              }}
+                          >
+                              <Ionicons name="add" size={20} color={COLORS.text} />
+                          </TouchableOpacity>
+                      ),
 
             headerSearchBarOptions: {
                 placeholder: 'Search',
@@ -160,44 +160,51 @@ export default function BackupsScreen() {
                 onChangeText: (event: any) => setSearchString(event.nativeEvent.text),
             },
         })
-    }, [navigation, createBackupMutation.isPending, createBackupMutation.mutate])
+    }, [
+        navigation,
+        createBackupMutation.isPending,
+        createBackupMutation.mutate,
+        deleteBackupMutation.isPending,
+        restoreBackupMutation.isPending,
+    ])
 
     return (
         <FlashList
             contentInsetAdjustmentBehavior="automatic"
             refreshControl={
                 <RefreshControl
-                    tintColor={COLORS.info}
-                    refreshing={backupsQuery.isRefetching}
-                    onRefresh={backupsQuery.refetch}
-                    // android
-                    progressBackgroundColor={COLORS.bgLevel1}
-                    colors={[COLORS.info]}
+                    refreshing={backupsQuery.isFetching}
+                    onRefresh={() => {
+                        backupsQuery.refetch()
+                    }}
                 />
             }
             showsVerticalScrollIndicator={false}
             data={filteredBackups}
             overrideProps={
-                emptyListComponent && {
+                Placeholder && {
                     contentContainerStyle: {
                         flex: 1,
                     },
                 }
             }
-            ListEmptyComponent={emptyListComponent}
+            ListEmptyComponent={Placeholder}
             renderItem={({ item: backup, index: backupIndex }) => (
                 <ContextMenu
                     dropdownMenuMode={true}
                     actions={[
                         {
                             title: 'Download',
+                            systemIcon: 'arrow.down.to.line',
                         },
                         {
                             title: 'Restore',
+                            systemIcon: 'arrow.counterclockwise',
                         },
                         {
                             title: 'Delete',
                             destructive: true,
+                            systemIcon: 'trash',
                         },
                     ]}
                     onPress={(e) => {
@@ -240,7 +247,7 @@ export default function BackupsScreen() {
                                                     style: 'cancel',
                                                 },
                                                 {
-                                                    text: 'Delete site',
+                                                    text: 'Delete backup',
                                                     style: 'destructive',
                                                     onPress: () => {
                                                         deleteBackupMutation.mutate(backup.key)
@@ -275,7 +282,6 @@ export default function BackupsScreen() {
                                     marginBottom: 4,
                                     textOverflow: 'ellipsis',
                                 }}
-                                numberOfLines={1}
                             >
                                 {backup.key}
                             </Text>

@@ -136,6 +136,7 @@ function RootLayout() {
                                 headerLargeTitle: true,
                                 ...commonHeaderStyle,
                                 ...commonContentStyle,
+                                headerShadowVisible: true,
                             }}
                         />
 
@@ -146,6 +147,7 @@ function RootLayout() {
                                 headerLargeTitle: true,
                                 ...commonHeaderStyle,
                                 ...commonContentStyle,
+                                headerShadowVisible: true,
                             }}
                         />
                     </Stack>

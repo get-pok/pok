@@ -20,6 +20,7 @@ export default function LogsLayout() {
                     backgroundColor: COLORS.bgApp,
                 },
                 title: 'Logs',
+                headerShadowVisible: true,
             }}
         >
             <Stack.Screen name="index" />

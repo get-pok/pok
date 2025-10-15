@@ -1,3 +1,4 @@
+import { useStore } from '@/store/default'
 import { usePersistedStore } from '@/store/persisted'
 import { QueryClient } from '@tanstack/react-query'
 import ms from 'ms'
@@ -18,4 +19,5 @@ export async function invalidateCurrentConnection() {
     if (currentConnection) {
         queryClient.removeQueries()
     }
+    useStore.setState({ pbClient: null })
 }

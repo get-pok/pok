@@ -20,6 +20,7 @@ export default function CollectionsLayout() {
                     backgroundColor: COLORS.bgApp,
                 },
                 title: 'Collections',
+                headerShadowVisible: true,
             }}
         >
             <Stack.Screen name="index" />

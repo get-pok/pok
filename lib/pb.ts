@@ -1,9 +1,16 @@
+import { useStore } from '@/store/default'
 import { usePersistedStore } from '@/store/persisted'
 import { router } from 'expo-router'
 import PocketBase from 'pocketbase'
 import { Alert } from 'react-native'
 
 export default async function getClient(connectionId?: string) {
+    const existingClient = useStore.getState().pbClient
+    if (existingClient?.authStore.isValid) {
+        console.log('Using existing client')
+        return existingClient
+    }
+
     const currentConnection = connectionId
         ? usePersistedStore.getState().connections.find((c) => c.id === connectionId)
         : usePersistedStore.getState().currentConnection
@@ -33,6 +40,8 @@ export default async function getClient(connectionId?: string) {
         router.dismissTo('/')
         Alert.alert('Error', 'Your Pocketbase credentials are invalid, please login again.')
     }
+
+    useStore.setState({ pbClient: client })
 
     return client
 }

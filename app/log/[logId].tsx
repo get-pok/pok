@@ -1,10 +1,11 @@
+import Text from '@/components/Text'
 import { LEVEL_COLORS, LEVEL_LABELS } from '@/lib/constants'
 import getClient from '@/lib/pb'
 import { COLORS } from '@/theme/colors'
 import { useQuery } from '@tanstack/react-query'
 import { useLocalSearchParams } from 'expo-router'
 import { useMemo } from 'react'
-import { ActivityIndicator, ScrollView, Text, TextInput, View } from 'react-native'
+import { ActivityIndicator, ScrollView, TextInput, View } from 'react-native'
 
 // Helper function to check if a value is empty
 const isEmpty = (value: any): boolean => {
@@ -105,7 +106,10 @@ export default function LogScreen() {
     }
 
     return (
-        <ScrollView contentInsetAdjustmentBehavior="automatic">
+        <ScrollView
+            contentInsetAdjustmentBehavior="automatic"
+            contentContainerStyle={{ paddingBottom: 120 }}
+        >
             {logFields.mainFields.map((field, fieldIndex) => {
                 const fieldValue = formatValue(field.value)
                 const displayName = field.key
@@ -117,10 +121,11 @@ export default function LogScreen() {
                             flexDirection: 'column',
                             gap: 10,
                             padding: 20,
+                            paddingTop: 12,
+                            paddingBottom: 16,
                             backgroundColor: fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined,
                             borderBottomWidth: 1,
                             borderColor: COLORS.hr,
-                            borderStyle: 'solid',
                         }}
                     >
                         <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: 'bold' }}>
@@ -165,10 +170,11 @@ export default function LogScreen() {
                             flexDirection: 'column',
                             gap: 10,
                             padding: 20,
+                            paddingTop: 12,
+                            paddingBottom: 16,
                             backgroundColor: totalIndex % 2 === 0 ? COLORS.bgLevel1 : undefined,
                             borderBottomWidth: 1,
                             borderColor: COLORS.hr,
-                            borderStyle: 'solid',
                         }}
                     >
                         <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: 'bold' }}>

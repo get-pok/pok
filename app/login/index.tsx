@@ -1,3 +1,4 @@
+import Text from '@/components/Text'
 import getClient from '@/lib/pb'
 import { invalidateCurrentConnection, queryClient } from '@/lib/query'
 import { usePersistedStore } from '@/store/persisted'
@@ -6,18 +7,8 @@ import { Ionicons } from '@expo/vector-icons'
 import { router, useNavigation } from 'expo-router'
 import PocketBase from 'pocketbase'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
-import {
-    Alert,
-    Button,
-    Image,
-    Platform,
-    Text,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native'
+import { Alert, Button, Image, Platform, TextInput, TouchableOpacity, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
-import {} from 'react-native-reanimated'
 
 export default function LoginScreen() {
     const navigation = useNavigation()

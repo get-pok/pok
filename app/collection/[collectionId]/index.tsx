@@ -1,4 +1,6 @@
-import EmptyListComponent from '@/components/EmptyListComponent'
+import buildPlaceholder from '@/components/Placeholder'
+import RefreshControl from '@/components/RefreshControl'
+import Text from '@/components/Text'
 import getClient from '@/lib/pb'
 import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
@@ -8,7 +10,7 @@ import { useQuery } from '@tanstack/react-query'
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams, useNavigation } from 'expo-router'
 import { useLayoutEffect, useMemo, useState } from 'react'
-import { RefreshControl, ScrollView, Text, TouchableOpacity, View } from 'react-native'
+import { ScrollView, TouchableOpacity, View } from 'react-native'
 import { useDebounce } from 'use-debounce'
 
 const log = (...args: any[]) => {
@@ -72,12 +74,12 @@ export default function CollectionScreen() {
         return primaryColumns[collectionId]
     }, [primaryColumns, collectionId])
 
-    const emptyListComponent = useMemo(() => {
-        const emptySchedules = EmptyListComponent({
+    const Placeholder = useMemo(() => {
+        const emptySchedules = buildPlaceholder({
             isLoading: collectionRecordsQuery.isLoading,
-            hasValue: schedules.length > 0,
+            hasData: schedules.length > 0,
             emptyLabel: 'No records found',
-            error: collectionRecordsQuery.error,
+            isError: collectionRecordsQuery.isError,
             errorLabel: 'Failed to fetch records',
         })
 
@@ -88,10 +90,11 @@ export default function CollectionScreen() {
                         paddingHorizontal: '20%',
                         fontSize: 16,
                         color: COLORS.text,
-                        fontWeight: 600,
+                        fontWeight: 500,
                         marginTop: 42,
                         textAlign: 'center',
                     }}
+                    full={true}
                 >
                     Please select a primary column to display your records.
                 </Text>
@@ -101,7 +104,7 @@ export default function CollectionScreen() {
         return emptySchedules
     }, [
         collectionRecordsQuery.isLoading,
-        collectionRecordsQuery.error,
+        collectionRecordsQuery.isError,
         schedules.length,
         primaryColumn,
     ])
@@ -130,24 +133,22 @@ export default function CollectionScreen() {
             contentInsetAdjustmentBehavior="automatic"
             refreshControl={
                 <RefreshControl
-                    tintColor={COLORS.info}
-                    refreshing={collectionRecordsQuery.isRefetching}
-                    onRefresh={collectionRecordsQuery.refetch}
-                    // android
-                    progressBackgroundColor={COLORS.bgLevel1}
-                    colors={[COLORS.info]}
+                    refreshing={collectionRecordsQuery.isFetching}
+                    onRefresh={() => {
+                        collectionRecordsQuery.refetch()
+                    }}
                 />
             }
             showsVerticalScrollIndicator={false}
             data={primaryColumn ? schedules : []}
             overrideProps={
-                emptyListComponent && {
+                Placeholder && {
                     contentContainerStyle: {
                         flex: 1,
                     },
                 }
             }
-            ListEmptyComponent={emptyListComponent}
+            ListEmptyComponent={Placeholder}
             extraData={primaryColumn}
             renderItem={({ item: record, index: recordIndex }) => {
                 return (

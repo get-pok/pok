@@ -20,6 +20,7 @@ export default function BackupsLayout() {
                     backgroundColor: COLORS.bgApp,
                 },
                 title: 'Backups',
+                headerShadowVisible: true,
             }}
         >
             <Stack.Screen name="index" />
