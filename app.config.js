@@ -5,9 +5,20 @@
 module.exports = ({ config }) => {
     return {
         ...config,
-        primaryColor: 'white',
-        backgroundColor: 'white',
+        primaryColor: '#000000',
+        backgroundColor: '#000000',
+
+        name: process.env.EXPO_PUBLIC_APP_NAME,
+        slug: process.env.EXPO_PUBLIC_APP_SLUG,
+        scheme: process.env.EXPO_PUBLIC_APP_SCHEME,
+        version: process.env.EXPO_PUBLIC_APP_VERSION,
         owner: process.env.EXPO_PUBLIC_OWNER,
+
+        orientation: 'portrait',
+        icon: './assets/icon.png',
+        userInterfaceStyle: 'dark',
+        newArchEnabled: true,
+
         ios: {
             ...(config.ios || {}),
             appleTeamId: process.env.EXPO_PUBLIC_APPLE_TEAM_ID,
@@ -24,14 +35,21 @@ module.exports = ({ config }) => {
             },
         },
 
-        name: 'POK',
-        slug: 'pok',
-        version: '1.1.0',
-        orientation: 'portrait',
-        icon: './assets/icon.png',
-        scheme: 'pok',
-        userInterfaceStyle: 'dark',
-        newArchEnabled: true,
+        androidNavigationBar: {
+            enforceContrast: false,
+        },
+        android: {
+            ...(config.android || {}),
+            package: process.env.EXPO_PUBLIC_ANDROID_PACKAGE,
+            adaptiveIcon: {
+                foregroundImage: './assets/icon.png',
+                backgroundColor: '#0A0A0A',
+            },
+            // googleServicesFile: './google-services.json',
+            playStoreUrl: process.env.EXPO_PUBLIC_ANDROID_STORE_URL,
+            predictiveBackGestureEnabled: true,
+        },
+
         plugins: [
             'expo-router',
             [
@@ -44,33 +62,24 @@ module.exports = ({ config }) => {
                 },
             ],
             [
-                'react-native-edge-to-edge',
-                {
-                    android: {
-                        parentTheme: 'Material3.Dynamic',
-                        enforceNavigationBarContrast: false,
-                    },
-                },
-            ],
-            [
                 'expo-build-properties',
                 {
                     ios: {
                         networkInspector: false,
                     },
-                    android: { usesCleartextTraffic: true },
+                    android: { usesCleartextTraffic: true, minSdkVersion: 26 },
                 },
             ],
-            './plugins/withEdgeToEdgeFix',
             [
                 '@sentry/react-native/expo',
                 {
                     url: 'https://sentry.io/',
-                    project: 'pok',
-                    organization: 'ff-global',
+                    project: process.env.EXPO_PUBLIC_SENTRY_PROJECT,
+                    organization: process.env.EXPO_PUBLIC_SENTRY_ORG,
                 },
             ],
         ],
+
         experiments: {
             typedRoutes: true,
         },
