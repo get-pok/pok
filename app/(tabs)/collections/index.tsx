@@ -1,6 +1,6 @@
-import buildPlaceholder from '@/components/Placeholder'
-import RefreshControl from '@/components/RefreshControl'
-import Text from '@/components/Text'
+import buildPlaceholder from '@/components/base/Placeholder'
+import RefreshControl from '@/components/base/RefreshControl'
+import Text from '@/components/base/Text'
 import getClient from '@/lib/pb'
 import { invalidateCurrentConnection, queryClient } from '@/lib/query'
 import { storage } from '@/lib/storage'
@@ -230,14 +230,7 @@ export default function CollectionsScreen() {
     return (
         <FlashList
             contentInsetAdjustmentBehavior="automatic"
-            refreshControl={
-                <RefreshControl
-                    refreshing={collectionsQuery.isFetching}
-                    onRefresh={() => {
-                        collectionsQuery.refetch()
-                    }}
-                />
-            }
+            refreshControl={<RefreshControl onRefresh={collectionsQuery.refetch} />}
             showsVerticalScrollIndicator={false}
             data={filteredCollections}
             overrideProps={

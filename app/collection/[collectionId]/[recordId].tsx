@@ -1,6 +1,8 @@
-import buildPlaceholder from '@/components/Placeholder'
-import RefreshControl from '@/components/RefreshControl'
-import Text from '@/components/Text'
+import ActivityIndicator from '@/components/base/ActivityIndicator'
+import { HeaderTouchableOpacity } from '@/components/base/HeaderTouchableOpacity'
+import buildPlaceholder from '@/components/base/Placeholder'
+import RefreshControl from '@/components/base/RefreshControl'
+import Text from '@/components/base/Text'
 import getClient from '@/lib/pb'
 import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
@@ -15,14 +17,7 @@ import { useNavigation } from 'expo-router'
 import * as WebBrowser from 'expo-web-browser'
 import ms from 'ms'
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
-import {
-    ActivityIndicator,
-    Alert,
-    ScrollView,
-    TextInput,
-    TouchableOpacity,
-    View,
-} from 'react-native'
+import { Alert, ScrollView, TextInput, TouchableOpacity, View } from 'react-native'
 import ContextMenu from 'react-native-context-menu-view'
 
 const log = (...args: any[]) => {
@@ -205,15 +200,11 @@ export default function RecordScreen() {
             title: record[primaryColumn] || '',
             headerRight: isLoading
                 ? () => (
-                      <ActivityIndicator
-                          style={{ marginRight: 10 }}
-                          size="small"
-                          color={COLORS.text}
-                      />
+                      <ActivityIndicator style={{ marginRight: 10 }} sm={true} monochrome={true} />
                   )
                 : hasChanges
                   ? () => (
-                        <TouchableOpacity
+                        <HeaderTouchableOpacity
                             onPress={() => {
                                 if (!hasChanges) return
                                 updateRecordMutation.mutate()
@@ -221,7 +212,7 @@ export default function RecordScreen() {
                             style={{ padding: 10 }}
                         >
                             <Ionicons name="save" size={20} color={COLORS.text} />
-                        </TouchableOpacity>
+                        </HeaderTouchableOpacity>
                     )
                   : () => (
                         <ContextMenu
@@ -305,7 +296,7 @@ export default function RecordScreen() {
                                 }
                             }}
                         >
-                            <TouchableOpacity
+                            <HeaderTouchableOpacity
                                 style={{
                                     backgroundColor: COLORS.bgLevel2,
                                     justifyContent: 'center',
@@ -320,7 +311,7 @@ export default function RecordScreen() {
                                     size={18}
                                     color={COLORS.text}
                                 />
-                            </TouchableOpacity>
+                            </HeaderTouchableOpacity>
                         </ContextMenu>
                     ),
         })
@@ -346,14 +337,7 @@ export default function RecordScreen() {
         <ScrollView
             contentInsetAdjustmentBehavior="automatic"
             contentContainerStyle={{ paddingBottom: 140 }}
-            refreshControl={
-                <RefreshControl
-                    refreshing={recordQuery.isFetching}
-                    onRefresh={() => {
-                        recordQuery.refetch()
-                    }}
-                />
-            }
+            refreshControl={<RefreshControl onRefresh={recordQuery.refetch} />}
         >
             {collectionQuery.data?.fields.map((field, fieldIndex) => {
                 const fieldValue = record[field.name]

@@ -1,6 +1,6 @@
-import buildPlaceholder from '@/components/Placeholder'
-import RefreshControl from '@/components/RefreshControl'
-import Text from '@/components/Text'
+import buildPlaceholder from '@/components/base/Placeholder'
+import RefreshControl from '@/components/base/RefreshControl'
+import Text from '@/components/base/Text'
 import getClient from '@/lib/pb'
 import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
@@ -131,14 +131,7 @@ export default function CollectionScreen() {
     return (
         <FlashList
             contentInsetAdjustmentBehavior="automatic"
-            refreshControl={
-                <RefreshControl
-                    refreshing={collectionRecordsQuery.isFetching}
-                    onRefresh={() => {
-                        collectionRecordsQuery.refetch()
-                    }}
-                />
-            }
+            refreshControl={<RefreshControl onRefresh={collectionRecordsQuery.refetch} />}
             showsVerticalScrollIndicator={false}
             data={primaryColumn ? schedules : []}
             overrideProps={

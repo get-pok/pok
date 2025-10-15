@@ -1,4 +1,4 @@
-import Text from '@/components/Text'
+import Text from '@/components/base/Text'
 import getClient from '@/lib/pb'
 import { invalidateCurrentConnection, queryClient } from '@/lib/query'
 import { usePersistedStore } from '@/store/persisted'

@@ -1,6 +1,8 @@
-import buildPlaceholder from '@/components/Placeholder'
-import RefreshControl from '@/components/RefreshControl'
-import Text from '@/components/Text'
+import ActivityIndicator from '@/components/base/ActivityIndicator'
+import { HeaderTouchableOpacity } from '@/components/base/HeaderTouchableOpacity'
+import buildPlaceholder from '@/components/base/Placeholder'
+import RefreshControl from '@/components/base/RefreshControl'
+import Text from '@/components/base/Text'
 import { formatBytes } from '@/lib/format'
 import getClient from '@/lib/pb'
 import { COLORS } from '@/theme/colors'
@@ -9,7 +11,7 @@ import { FlashList } from '@shopify/flash-list'
 import { useMutation, useQuery } from '@tanstack/react-query'
 import { useNavigation } from 'expo-router'
 import { useLayoutEffect, useMemo, useState } from 'react'
-import { ActivityIndicator, Alert, Linking, TouchableOpacity, View } from 'react-native'
+import { Alert, Linking, TouchableOpacity, View } from 'react-native'
 import ContextMenu from 'react-native-context-menu-view'
 
 const log = (...args: any[]) => {
@@ -111,12 +113,12 @@ export default function BackupsScreen() {
                     ? () => (
                           <ActivityIndicator
                               style={{ marginRight: 10 }}
-                              size="small"
-                              color={COLORS.text}
+                              sm={true}
+                              monochrome={true}
                           />
                       )
                     : () => (
-                          <TouchableOpacity
+                          <HeaderTouchableOpacity
                               onPress={() => {
                                   Alert.prompt(
                                       'Create Backup',
@@ -148,7 +150,7 @@ export default function BackupsScreen() {
                               }}
                           >
                               <Ionicons name="add" size={20} color={COLORS.text} />
-                          </TouchableOpacity>
+                          </HeaderTouchableOpacity>
                       ),
 
             headerSearchBarOptions: {
@@ -171,14 +173,7 @@ export default function BackupsScreen() {
     return (
         <FlashList
             contentInsetAdjustmentBehavior="automatic"
-            refreshControl={
-                <RefreshControl
-                    refreshing={backupsQuery.isFetching}
-                    onRefresh={() => {
-                        backupsQuery.refetch()
-                    }}
-                />
-            }
+            refreshControl={<RefreshControl onRefresh={backupsQuery.refetch} />}
             showsVerticalScrollIndicator={false}
             data={filteredBackups}
             overrideProps={

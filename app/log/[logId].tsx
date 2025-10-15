@@ -1,11 +1,12 @@
-import Text from '@/components/Text'
+import ActivityIndicator from '@/components/base/ActivityIndicator'
+import Text from '@/components/base/Text'
 import { LEVEL_COLORS, LEVEL_LABELS } from '@/lib/constants'
 import getClient from '@/lib/pb'
 import { COLORS } from '@/theme/colors'
 import { useQuery } from '@tanstack/react-query'
 import { useLocalSearchParams } from 'expo-router'
 import { useMemo } from 'react'
-import { ActivityIndicator, ScrollView, TextInput, View } from 'react-native'
+import { ScrollView, TextInput, View } from 'react-native'
 
 // Helper function to check if a value is empty
 const isEmpty = (value: any): boolean => {
@@ -78,7 +79,7 @@ export default function LogScreen() {
     if (logQuery.isLoading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-                <ActivityIndicator size="large" color={COLORS.info} />
+                <ActivityIndicator />
             </View>
         )
     }

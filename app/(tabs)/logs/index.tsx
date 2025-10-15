@@ -1,6 +1,6 @@
-import buildPlaceholder from '@/components/Placeholder'
-import RefreshControl from '@/components/RefreshControl'
-import Text from '@/components/Text'
+import buildPlaceholder from '@/components/base/Placeholder'
+import RefreshControl from '@/components/base/RefreshControl'
+import Text from '@/components/base/Text'
 import getClient from '@/lib/pb'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
@@ -83,14 +83,7 @@ export default function LogsScreen() {
     return (
         <FlashList
             contentInsetAdjustmentBehavior="automatic"
-            refreshControl={
-                <RefreshControl
-                    refreshing={logsQuery.isFetching}
-                    onRefresh={() => {
-                        logsQuery.refetch()
-                    }}
-                />
-            }
+            refreshControl={<RefreshControl onRefresh={logsQuery.refetch} />}
             showsVerticalScrollIndicator={false}
             data={logs}
             overrideProps={

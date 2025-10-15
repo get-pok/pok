@@ -1,5 +1,5 @@
-import ActivityIndicator from '@/components/ActivityIndicator'
-import Text from '@/components/Text'
+import ActivityIndicator from '@/components/base/ActivityIndicator'
+import Text from '@/components/base/Text'
 import { COLORS } from '@/theme/colors'
 import { useEffect, useState } from 'react'
 import { View } from 'react-native'
