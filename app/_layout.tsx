@@ -7,6 +7,7 @@ import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client
 import { isRunningInExpoGo } from 'expo'
 import { activateKeepAwakeAsync } from 'expo-keep-awake'
 import { SplashScreen, Stack, useNavigationContainerRef } from 'expo-router'
+import { SuperwallProvider } from 'expo-superwall'
 import { useEffect } from 'react'
 import { Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
@@ -79,77 +80,93 @@ function RootLayout() {
     return (
         <GestureHandlerRootView>
             <KeyboardProvider>
-                <PersistQueryClientProvider
-                    client={queryClient}
-                    persistOptions={{
-                        persister: mmkvPersister,
-                        dehydrateOptions: {
-                            shouldDehydrateQuery: (query) => query.state.data !== undefined,
-                        },
+                <SuperwallProvider
+                    apiKeys={{
+                        ios: process.env.EXPO_PUBLIC_IOS_SUPERWALL_API_KEY,
+                        android: process.env.EXPO_PUBLIC_ANDROID_SUPERWALL_API_KEY,
                     }}
                 >
-                    <Stack
-                        screenOptions={{
-                            navigationBarHidden: true,
+                    <PersistQueryClientProvider
+                        client={queryClient}
+                        persistOptions={{
+                            persister: mmkvPersister,
+                            dehydrateOptions: {
+                                shouldDehydrateQuery: (query) => query.state.data !== undefined,
+                            },
                         }}
                     >
-                        <Stack.Screen
-                            name="login/index"
-                            options={{
-                                title: 'Login',
-                                headerShown: false,
-                                // gestureEnabled: false,
-                                // animation: 'none',
-                                presentation: 'modal',
-                                ...commonContentStyle,
-                                autoHideHomeIndicator: true,
+                        <Stack
+                            screenOptions={{
+                                navigationBarHidden: true,
                             }}
-                        />
+                        >
+                            <Stack.Screen
+                                name="onboard/index"
+                                options={{
+                                    headerShown: false,
+                                    gestureEnabled: false,
+                                    animation: 'none',
+                                }}
+                            />
 
-                        <Stack.Screen
-                            name="(tabs)"
-                            options={{
-                                title: 'Home',
-                                headerShown: false,
-                                ...commonHeaderStyle,
-                                ...commonContentStyle,
-                                autoHideHomeIndicator: true,
-                            }}
-                        />
+                            <Stack.Screen
+                                name="login/index"
+                                options={{
+                                    title: 'Login',
+                                    headerShown: false,
+                                    // gestureEnabled: false,
+                                    // animation: 'none',
+                                    presentation: 'modal',
+                                    ...commonContentStyle,
+                                    autoHideHomeIndicator: true,
+                                }}
+                            />
 
-                        <Stack.Screen
-                            name="collection/[collectionId]/index"
-                            options={{
-                                title: '',
-                                headerLargeTitle: true,
-                                ...commonHeaderStyle,
-                                ...commonContentStyle,
-                            }}
-                        />
+                            <Stack.Screen
+                                name="(tabs)"
+                                options={{
+                                    title: 'Home',
+                                    headerShown: false,
+                                    ...commonHeaderStyle,
+                                    ...commonContentStyle,
+                                    autoHideHomeIndicator: true,
+                                }}
+                            />
 
-                        <Stack.Screen
-                            name="collection/[collectionId]/[recordId]"
-                            options={{
-                                title: '',
-                                headerLargeTitle: true,
-                                ...commonHeaderStyle,
-                                ...commonContentStyle,
-                                headerShadowVisible: true,
-                            }}
-                        />
+                            <Stack.Screen
+                                name="collection/[collectionId]/index"
+                                options={{
+                                    title: '',
+                                    headerLargeTitle: true,
+                                    ...commonHeaderStyle,
+                                    ...commonContentStyle,
+                                }}
+                            />
 
-                        <Stack.Screen
-                            name="log/[logId]"
-                            options={{
-                                title: 'Log Details',
-                                headerLargeTitle: true,
-                                ...commonHeaderStyle,
-                                ...commonContentStyle,
-                                headerShadowVisible: true,
-                            }}
-                        />
-                    </Stack>
-                </PersistQueryClientProvider>
+                            <Stack.Screen
+                                name="collection/[collectionId]/[recordId]"
+                                options={{
+                                    title: '',
+                                    headerLargeTitle: true,
+                                    ...commonHeaderStyle,
+                                    ...commonContentStyle,
+                                    headerShadowVisible: true,
+                                }}
+                            />
+
+                            <Stack.Screen
+                                name="log/[logId]"
+                                options={{
+                                    title: 'Log Details',
+                                    headerLargeTitle: true,
+                                    ...commonHeaderStyle,
+                                    ...commonContentStyle,
+                                    headerShadowVisible: true,
+                                }}
+                            />
+                        </Stack>
+                    </PersistQueryClientProvider>
+                </SuperwallProvider>
             </KeyboardProvider>
         </GestureHandlerRootView>
     )

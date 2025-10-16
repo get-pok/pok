@@ -7,15 +7,17 @@ import { storage } from '@/lib/storage'
 import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
+import * as Sentry from '@sentry/react-native'
 import { FlashList } from '@shopify/flash-list'
-import Superwall from '@superwall/react-native-superwall'
 import { useQuery } from '@tanstack/react-query'
 import * as Haptics from 'expo-haptics'
+import * as QuickActions from 'expo-quick-actions'
 import { router, useNavigation } from 'expo-router'
 import * as StoreReview from 'expo-store-review'
+import { usePlacement, useUser } from 'expo-superwall'
 import ms from 'ms'
-import { useLayoutEffect, useMemo, useState } from 'react'
-import { Alert, Image, TouchableOpacity, View } from 'react-native'
+import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { Alert, Image, Platform, TouchableOpacity, View } from 'react-native'
 import ContextMenu from 'react-native-context-menu-view'
 
 const log = (...args: any[]) => {
@@ -23,6 +25,8 @@ const log = (...args: any[]) => {
 }
 
 export default function CollectionsScreen() {
+    const { registerPlacement } = usePlacement()
+    const { subscriptionStatus } = useUser()
     const navigation = useNavigation()
     const [searchString, setSearchString] = useState('')
 
@@ -88,6 +92,39 @@ export default function CollectionsScreen() {
 
         return emptyCollections
     }, [collectionsQuery.isLoading, collectionsQuery.isError, filteredCollections.length])
+
+    useEffect(() => {
+        if (subscriptionStatus.status !== 'INACTIVE') return
+
+        setTimeout(() => {
+            registerPlacement({
+                placement: 'LifetimeOffer_1',
+                feature: () => {
+                    // WidgetKitModule.setIsSubscribed(true)
+                    Alert.alert('Congrats, you unlocked lifetime access to Pok.')
+                },
+            }).catch((error) => {
+                Sentry.captureException(error)
+                console.error('Error registering LifetimeOffer_1', error)
+            })
+        }, 1000)
+
+        QuickActions.isSupported().then((supported) => {
+            if (!supported) return
+            QuickActions.setItems([
+                {
+                    id: '0',
+                    title:
+                        Platform.OS === 'android'
+                            ? "Don't delete me ): Tap here!"
+                            : "Don't delete me ):",
+                    subtitle: "Here's 50% off for life!",
+                    icon: 'love',
+                    params: { href: '/showLfo1=1' },
+                },
+            ])
+        })
+    }, [registerPlacement, subscriptionStatus.status])
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -171,17 +208,16 @@ export default function CollectionsScreen() {
                                 return
                             }
 
-                            Superwall.shared
-                                .register({
-                                    placement: 'AddConnection',
-                                    feature: () => {
-                                        router.push('/login')
-                                    },
-                                })
-                                .catch((error) => {
-                                    console.error('Error registering AddConnection', error)
-                                    Alert.alert('Error', 'Something went wrong, please try again.')
-                                })
+                            registerPlacement({
+                                placement: 'AddConnection',
+                                feature: () => {
+                                    router.push('/login')
+                                },
+                            }).catch((error) => {
+                                Sentry.captureException(error)
+                                console.error('Error registering AddConnection', error)
+                                Alert.alert('Error', 'Something went wrong, please try again.')
+                            })
                             return
                         }
 

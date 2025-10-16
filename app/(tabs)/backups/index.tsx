@@ -130,7 +130,7 @@ export default function BackupsScreen() {
                                           },
                                           {
                                               text: 'Create',
-                                              onPress: (text) => {
+                                              onPress: (text?: string) => {
                                                   if (!text) return
                                                   createBackupMutation.mutate(text)
                                               },

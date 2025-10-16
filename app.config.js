@@ -70,6 +70,7 @@ module.exports = ({ config }) => {
                     android: { usesCleartextTraffic: true, minSdkVersion: 26 },
                 },
             ],
+            'expo-quick-actions',
             [
                 '@sentry/react-native/expo',
                 {

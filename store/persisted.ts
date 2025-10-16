@@ -27,11 +27,13 @@ interface PersistedStoreState {
 
     primaryColumns: Record<string, string | undefined>
     setPrimaryColumn: (collectionId: string, column: string) => void
-	
-	acknowledgments: {
+
+    acknowledgments: {
         swipeLeft: boolean
     }
     acknowledge: (type: keyof PersistedStoreState['acknowledgments']) => void
+
+    hasSeenOnboarding: boolean
 }
 
 export const usePersistedStore = create<PersistedStoreState>()(
@@ -85,13 +87,15 @@ export const usePersistedStore = create<PersistedStoreState>()(
             setPrimaryColumn: (collectionId: string, column: string) => {
                 set({ primaryColumns: { ...get().primaryColumns, [collectionId]: column } })
             },
-			
-			acknowledgments: {
-				swipeLeft: false
-			},
-			acknowledge: (type: keyof PersistedStoreState['acknowledgments']) => {
-				set({ acknowledgments: { ...get().acknowledgments, [type]: true } })
-			}
+
+            acknowledgments: {
+                swipeLeft: false,
+            },
+            acknowledge: (type: keyof PersistedStoreState['acknowledgments']) => {
+                set({ acknowledgments: { ...get().acknowledgments, [type]: true } })
+            },
+
+            hasSeenOnboarding: false,
         }),
         {
             name: 'pok-persisted-store',

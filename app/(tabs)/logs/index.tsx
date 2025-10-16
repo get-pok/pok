@@ -4,11 +4,12 @@ import Text from '@/components/base/Text'
 import getClient from '@/lib/pb'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
+import * as Sentry from '@sentry/react-native'
 import { FlashList } from '@shopify/flash-list'
-import Superwall from '@superwall/react-native-superwall'
 import { useQuery } from '@tanstack/react-query'
 import * as Haptics from 'expo-haptics'
 import { router, useNavigation } from 'expo-router'
+import { usePlacement } from 'expo-superwall'
 import { useLayoutEffect, useMemo, useState } from 'react'
 import { Alert, TouchableOpacity, View } from 'react-native'
 import { useDebounce } from 'use-debounce'
@@ -18,6 +19,7 @@ const log = (...args: any[]) => {
 }
 
 export default function LogsScreen() {
+    const { registerPlacement } = usePlacement()
     const navigation = useNavigation()
 
     const [filterString, setFilterString] = useState('')
@@ -112,17 +114,16 @@ export default function LogsScreen() {
                             return
                         }
 
-                        Superwall.shared
-                            .register({
-                                placement: 'ExpandLog',
-                                feature: () => {
-                                    router.push(`/log/${log.id}`)
-                                },
-                            })
-                            .catch((error) => {
-                                console.error('Error registering ExpandLog', error)
-                                Alert.alert('Error', 'Something went wrong, please try again.')
-                            })
+                        registerPlacement({
+                            placement: 'ExpandLog',
+                            feature: () => {
+                                router.push(`/log/${log.id}`)
+                            },
+                        }).catch((error) => {
+                            Sentry.captureException(error)
+                            console.error('Error registering ExpandLog', error)
+                            Alert.alert('Error', 'Something went wrong, please try again.')
+                        })
                     }}
                 >
                     <View style={{ flex: 1, gap: 4 }}>
