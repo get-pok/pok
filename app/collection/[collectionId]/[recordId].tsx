@@ -8,12 +8,13 @@ import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
 import Clipboard from '@react-native-clipboard/clipboard'
-import Superwall from '@superwall/react-native-superwall'
+import * as Sentry from '@sentry/react-native'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Checkbox from 'expo-checkbox'
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useNavigation } from 'expo-router'
+import { usePlacement } from 'expo-superwall'
 import * as WebBrowser from 'expo-web-browser'
 import ms from 'ms'
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
@@ -29,6 +30,7 @@ export default function RecordScreen() {
         collectionId: string
         recordId: string
     }>()
+    const { registerPlacement } = usePlacement()
     const navigation = useNavigation()
     const queryClient = useQueryClient()
 
@@ -408,18 +410,17 @@ export default function RecordScreen() {
                                         return
                                     }
 
-                                    Superwall.shared
-                                        .register({
-                                            placement: 'OpenFile',
-                                            feature: () => openFileMutation.mutate(),
-                                        })
-                                        .catch((error) => {
-                                            console.error('Error registering OpenFile', error)
-                                            Alert.alert(
-                                                'Error',
-                                                'Something went wrong, please try again.'
-                                            )
-                                        })
+                                    registerPlacement({
+                                        placement: 'OpenFile',
+                                        feature: () => openFileMutation.mutate(),
+                                    }).catch((error) => {
+                                        Sentry.captureException(error)
+                                        console.error('Error registering OpenFile', error)
+                                        Alert.alert(
+                                            'Error',
+                                            'Something went wrong, please try again.'
+                                        )
+                                    })
                                 }}
                             >
                                 <Ionicons name="eye" size={20} color={COLORS.text} />
