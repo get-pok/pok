@@ -1,17 +1,21 @@
 import ActivityIndicator from '@/components/base/ActivityIndicator'
+import HeaderItem from '@/components/base/HeaderItem'
 import { HeaderTouchableOpacity } from '@/components/base/HeaderTouchableOpacity'
 import buildPlaceholder from '@/components/base/Placeholder'
 import RefreshControl from '@/components/base/RefreshControl'
 import Text from '@/components/base/Text'
 import { formatBytes } from '@/lib/format'
+import { useFlashlistProps } from '@/lib/hooks'
 import getClient from '@/lib/pb'
 import { COLORS } from '@/theme/colors'
+import Alert from '@blazejkustra/react-native-alert'
 import { Ionicons } from '@expo/vector-icons'
 import { FlashList } from '@shopify/flash-list'
 import { useMutation, useQuery } from '@tanstack/react-query'
+import { isLiquidGlassAvailable } from 'expo-glass-effect'
 import { useNavigation } from 'expo-router'
 import { useLayoutEffect, useMemo, useState } from 'react'
-import { Alert, Linking, TouchableOpacity, View } from 'react-native'
+import { Linking, TouchableOpacity, View } from 'react-native'
 import ContextMenu from 'react-native-context-menu-view'
 
 const log = (...args: any[]) => {
@@ -103,6 +107,7 @@ export default function BackupsScreen() {
 
         return emptyBackups
     }, [backupsQuery.isLoading, backupsQuery.isError, filteredBackups.length])
+    const { overrideProps } = useFlashlistProps(Placeholder)
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -111,11 +116,13 @@ export default function BackupsScreen() {
                 deleteBackupMutation.isPending ||
                 restoreBackupMutation.isPending
                     ? () => (
-                          <ActivityIndicator
-                              style={{ marginRight: 10 }}
-                              sm={true}
-                              monochrome={true}
-                          />
+                          <HeaderItem>
+                              <ActivityIndicator
+                                  //   style={{ marginRight: 10 }}
+                                  sm={true}
+                                  monochrome={true}
+                              />
+                          </HeaderItem>
                       )
                     : () => (
                           <HeaderTouchableOpacity
@@ -140,16 +147,24 @@ export default function BackupsScreen() {
                                       `pok_${new Date().toISOString().split('T')[0].replace(/-/g, '')}_${Math.floor(Date.now() / 1000)}`
                                   )
                               }}
-                              style={{
-                                  backgroundColor: COLORS.bgLevel2,
-                                  justifyContent: 'center',
-                                  alignItems: 'center',
-                                  borderRadius: 16,
-                                  height: 32,
-                                  width: 32,
-                              }}
+                              style={
+                                  isLiquidGlassAvailable()
+                                      ? undefined
+                                      : {
+                                            backgroundColor: COLORS.bgLevel2,
+                                            justifyContent: 'center',
+                                            alignItems: 'center',
+                                            borderRadius: 16,
+                                            height: 32,
+                                            width: 32,
+                                        }
+                              }
                           >
-                              <Ionicons name="add" size={20} color={COLORS.text} />
+                              <Ionicons
+                                  name="add"
+                                  size={isLiquidGlassAvailable() ? 32 : 20}
+                                  color={COLORS.text}
+                              />
                           </HeaderTouchableOpacity>
                       ),
 
@@ -158,8 +173,11 @@ export default function BackupsScreen() {
                 hideWhenScrolling: true,
                 barTintColor: COLORS.bgLevel2,
                 textColor: COLORS.text,
-                placeholderTextColor: COLORS.textMuted,
                 onChangeText: (event: any) => setSearchString(event.nativeEvent.text),
+                autoCapitalize: 'none',
+                tintColor: COLORS.bgLevel2,
+                hintTextColor: COLORS.textMuted,
+                headerIconColor: COLORS.bgLevel2,
             },
         })
     }, [
@@ -176,13 +194,7 @@ export default function BackupsScreen() {
             refreshControl={<RefreshControl onRefresh={backupsQuery.refetch} />}
             showsVerticalScrollIndicator={false}
             data={filteredBackups}
-            overrideProps={
-                Placeholder && {
-                    contentContainerStyle: {
-                        flex: 1,
-                    },
-                }
-            }
+            overrideProps={overrideProps}
             ListEmptyComponent={Placeholder}
             renderItem={({ item: backup, index: backupIndex }) => (
                 <ContextMenu

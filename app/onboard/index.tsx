@@ -1,5 +1,6 @@
 import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
+import { Ionicons } from '@expo/vector-icons'
 import { type OnboardingFeature, OnboardingView } from 'expo-onboarding'
 import { router } from 'expo-router'
 import { Text, TouchableOpacity, View } from 'react-native'
@@ -10,16 +11,18 @@ const FEATURES: OnboardingFeature[] = [
         description:
             'See logs, browse collections, and check on your databases everywhere you are.',
         systemImage: 'server.rack',
+        icon: () => <Ionicons name="server" size={42} color={COLORS.info} />,
     },
     {
         title: 'Open Source',
         description:
             'You are using Open Source Software (OSS) crafted by SQLite-loving people. Give it a star!',
         systemImage: 'star.fill',
+        icon: () => <Ionicons name="star" size={42} color={COLORS.info} />,
         links: [
             {
                 sectionText: 'Give it a star!',
-                sectionUrl: 'https://github.com/getpok/pok',
+                sectionUrl: 'https://github.com/get-pok/pok',
             },
         ],
     },
@@ -27,6 +30,7 @@ const FEATURES: OnboardingFeature[] = [
         title: 'Local Only',
         description:
             'Your data never leaves the app, this includes your API token which is locally stored.',
+        icon: () => <Ionicons name="shield" size={42} color={COLORS.info} />,
         systemImage: 'shield.fill',
     },
 ]

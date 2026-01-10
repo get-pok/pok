@@ -1,12 +1,15 @@
+import { HeaderTouchableOpacity } from '@/components/base/HeaderTouchableOpacity'
 import buildPlaceholder from '@/components/base/Placeholder'
 import RefreshControl from '@/components/base/RefreshControl'
 import Text from '@/components/base/Text'
+import { useFlashlistProps } from '@/lib/hooks'
 import getClient from '@/lib/pb'
 import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
 import { FlashList } from '@shopify/flash-list'
 import { useQuery } from '@tanstack/react-query'
+import { isLiquidGlassAvailable } from 'expo-glass-effect'
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams, useNavigation } from 'expo-router'
 import { useLayoutEffect, useMemo, useState } from 'react'
@@ -66,7 +69,7 @@ export default function CollectionScreen() {
         },
     })
 
-    const schedules = useMemo(() => {
+    const records = useMemo(() => {
         return collectionRecordsQuery.data || []
     }, [collectionRecordsQuery.data])
 
@@ -75,15 +78,15 @@ export default function CollectionScreen() {
     }, [primaryColumns, collectionId])
 
     const Placeholder = useMemo(() => {
-        const emptySchedules = buildPlaceholder({
+        const emptyRecords = buildPlaceholder({
             isLoading: collectionRecordsQuery.isLoading,
-            hasData: schedules.length > 0,
+            hasData: records.length > 0,
             emptyLabel: 'No records found',
             isError: collectionRecordsQuery.isError,
             errorLabel: 'Failed to fetch records',
         })
 
-        if (!emptySchedules && !primaryColumn) {
+        if (!emptyRecords && !primaryColumn) {
             return (
                 <Text
                     style={{
@@ -101,13 +104,14 @@ export default function CollectionScreen() {
             )
         }
 
-        return emptySchedules
+        return emptyRecords
     }, [
         collectionRecordsQuery.isLoading,
         collectionRecordsQuery.isError,
-        schedules.length,
+        records.length,
         primaryColumn,
     ])
+    const { overrideProps } = useFlashlistProps(Placeholder)
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -117,30 +121,38 @@ export default function CollectionScreen() {
                       ? `(${collectionRecordsQuery.data.length})`
                       : '')
                 : '',
+            headerRight: () => (
+                <HeaderTouchableOpacity
+                    onPress={() => router.push(`/collection/${collectionId}/add`)}
+                >
+                    <Ionicons
+                        name={isLiquidGlassAvailable() ? 'add-sharp' : 'add-circle'}
+                        size={36}
+                        color={COLORS.info}
+                    />
+                </HeaderTouchableOpacity>
+            ),
             headerSearchBarOptions: {
                 placeholder: `Search term or filter like created > "${new Date().getFullYear()}-01-01"...`,
                 hideWhenScrolling: true,
                 barTintColor: COLORS.bgLevel2,
                 textColor: COLORS.text,
-                placeholderTextColor: COLORS.textMuted,
                 onChangeText: (event: any) => setFilterString(event.nativeEvent.text),
+                autoCapitalize: 'none',
+                tintColor: COLORS.bgLevel2,
+                hintTextColor: COLORS.textMuted,
+                headerIconColor: COLORS.bgLevel2,
             },
         })
-    }, [navigation, collectionQuery.data?.name, collectionRecordsQuery.data?.length])
+    }, [navigation, collectionQuery.data?.name, collectionRecordsQuery.data?.length, collectionId])
 
     return (
         <FlashList
             contentInsetAdjustmentBehavior="automatic"
             refreshControl={<RefreshControl onRefresh={collectionRecordsQuery.refetch} />}
             showsVerticalScrollIndicator={false}
-            data={primaryColumn ? schedules : []}
-            overrideProps={
-                Placeholder && {
-                    contentContainerStyle: {
-                        flex: 1,
-                    },
-                }
-            }
+            data={primaryColumn ? records : []}
+            overrideProps={overrideProps}
             ListEmptyComponent={Placeholder}
             extraData={primaryColumn}
             renderItem={({ item: record, index: recordIndex }) => {

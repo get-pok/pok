@@ -1,6 +1,7 @@
 import buildPlaceholder from '@/components/base/Placeholder'
 import RefreshControl from '@/components/base/RefreshControl'
 import Text from '@/components/base/Text'
+import { useFlashlistProps } from '@/lib/hooks'
 import getClient from '@/lib/pb'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
@@ -68,6 +69,7 @@ export default function LogsScreen() {
 
         return emptyLogs
     }, [logsQuery.isLoading, logsQuery.isError, logs.length])
+    const { overrideProps } = useFlashlistProps(Placeholder)
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -76,8 +78,11 @@ export default function LogsScreen() {
                 hideWhenScrolling: true,
                 barTintColor: COLORS.bgLevel2,
                 textColor: COLORS.text,
-                placeholderTextColor: COLORS.textMuted,
                 onChangeText: (event: any) => setFilterString(event.nativeEvent.text),
+                autoCapitalize: 'none',
+                tintColor: COLORS.bgLevel2,
+                hintTextColor: COLORS.textMuted,
+                headerIconColor: COLORS.bgLevel2,
             },
         })
     }, [navigation])
@@ -88,13 +93,7 @@ export default function LogsScreen() {
             refreshControl={<RefreshControl onRefresh={logsQuery.refetch} />}
             showsVerticalScrollIndicator={false}
             data={logs}
-            overrideProps={
-                Placeholder && {
-                    contentContainerStyle: {
-                        flex: 1,
-                    },
-                }
-            }
+            overrideProps={overrideProps}
             ListEmptyComponent={Placeholder}
             renderItem={({ item: log, index: logIndex }) => (
                 <TouchableOpacity

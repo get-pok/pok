@@ -5,13 +5,16 @@ import * as Sentry from '@sentry/react-native'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
 import { isRunningInExpoGo } from 'expo'
+import { isLiquidGlassAvailable } from 'expo-glass-effect'
 import { activateKeepAwakeAsync } from 'expo-keep-awake'
+import { useQuickActionRouting } from 'expo-quick-actions/router'
 import { SplashScreen, Stack, useNavigationContainerRef } from 'expo-router'
 import { SuperwallProvider } from 'expo-superwall'
 import { useEffect } from 'react'
 import { Platform } from 'react-native'
 import { GestureHandlerRootView } from 'react-native-gesture-handler'
 import { KeyboardProvider } from 'react-native-keyboard-controller'
+import { SafeAreaProvider } from 'react-native-safe-area-context'
 
 const navigationIntegration = Sentry.reactNavigationIntegration({
     enableTimeToInitialDisplay: !isRunningInExpoGo(),
@@ -51,9 +54,11 @@ const mmkvPersister = createSyncStoragePersister({
 function RootLayout() {
     const commonHeaderStyle = {
         headerTransparent: Platform.OS === 'ios',
-        headerStyle: {
-            backgroundColor: COLORS.bgApp,
-        },
+        headerStyle: isLiquidGlassAvailable()
+            ? undefined
+            : {
+                  backgroundColor: COLORS.bgApp,
+              },
         headerTintColor: COLORS.text,
         headerShadowVisible: false,
     }
@@ -64,6 +69,7 @@ function RootLayout() {
         },
     }
 
+    useQuickActionRouting()
     const ref = useNavigationContainerRef()
 
     useEffect(() => {
@@ -78,97 +84,110 @@ function RootLayout() {
     }, [])
 
     return (
-        <GestureHandlerRootView>
-            <KeyboardProvider>
-                <SuperwallProvider
-                    apiKeys={{
-                        ios: process.env.EXPO_PUBLIC_IOS_SUPERWALL_API_KEY,
-                        android: process.env.EXPO_PUBLIC_ANDROID_SUPERWALL_API_KEY,
-                    }}
-                >
-                    <PersistQueryClientProvider
-                        client={queryClient}
-                        persistOptions={{
-                            persister: mmkvPersister,
-                            dehydrateOptions: {
-                                shouldDehydrateQuery: (query) => query.state.data !== undefined,
-                            },
+        <SafeAreaProvider>
+            <GestureHandlerRootView>
+                <KeyboardProvider>
+                    <SuperwallProvider
+                        apiKeys={{
+                            ios: process.env.EXPO_PUBLIC_IOS_SUPERWALL_API_KEY,
+                            android: process.env.EXPO_PUBLIC_ANDROID_SUPERWALL_API_KEY,
                         }}
                     >
-                        <Stack
-                            screenOptions={{
-                                navigationBarHidden: true,
+                        <PersistQueryClientProvider
+                            client={queryClient}
+                            persistOptions={{
+                                persister: mmkvPersister,
+                                dehydrateOptions: {
+                                    shouldDehydrateQuery: (query) => query.state.data !== undefined,
+                                },
                             }}
                         >
-                            <Stack.Screen
-                                name="onboard/index"
-                                options={{
-                                    headerShown: false,
-                                    gestureEnabled: false,
-                                    animation: 'none',
+                            <Stack
+                                screenOptions={{
+                                    navigationBarHidden: true,
                                 }}
-                            />
+                            >
+                                <Stack.Screen
+                                    name="onboard/index"
+                                    options={{
+                                        headerShown: false,
+                                        gestureEnabled: false,
+                                        animation: 'none',
+                                    }}
+                                />
 
-                            <Stack.Screen
-                                name="login/index"
-                                options={{
-                                    title: 'Login',
-                                    headerShown: false,
-                                    // gestureEnabled: false,
-                                    // animation: 'none',
-                                    presentation: 'modal',
-                                    ...commonContentStyle,
-                                    autoHideHomeIndicator: true,
-                                }}
-                            />
+                                <Stack.Screen
+                                    name="login/index"
+                                    options={{
+                                        title: 'Login',
+                                        headerShown: false,
+                                        // gestureEnabled: false,
+                                        // animation: 'none',
+                                        presentation: 'modal',
+                                        ...commonContentStyle,
+                                        autoHideHomeIndicator: true,
+                                    }}
+                                />
 
-                            <Stack.Screen
-                                name="(tabs)"
-                                options={{
-                                    title: 'Home',
-                                    headerShown: false,
-                                    ...commonHeaderStyle,
-                                    ...commonContentStyle,
-                                    autoHideHomeIndicator: true,
-                                }}
-                            />
+                                <Stack.Screen
+                                    name="(tabs)"
+                                    options={{
+                                        title: 'Home',
+                                        headerShown: false,
+                                        ...commonHeaderStyle,
+                                        ...commonContentStyle,
+                                        autoHideHomeIndicator: true,
+                                    }}
+                                />
 
-                            <Stack.Screen
-                                name="collection/[collectionId]/index"
-                                options={{
-                                    title: '',
-                                    headerLargeTitle: true,
-                                    ...commonHeaderStyle,
-                                    ...commonContentStyle,
-                                }}
-                            />
+                                <Stack.Screen
+                                    name="collection/[collectionId]/index"
+                                    options={{
+                                        title: '',
+                                        headerLargeTitle: true,
+                                        ...commonHeaderStyle,
+                                        ...commonContentStyle,
+                                    }}
+                                />
 
-                            <Stack.Screen
-                                name="collection/[collectionId]/[recordId]"
-                                options={{
-                                    title: '',
-                                    headerLargeTitle: true,
-                                    ...commonHeaderStyle,
-                                    ...commonContentStyle,
-                                    headerShadowVisible: true,
-                                }}
-                            />
+                                <Stack.Screen
+                                    name="collection/[collectionId]/[recordId]"
+                                    options={{
+                                        title: '',
+                                        headerLargeTitle: true,
+                                        ...commonHeaderStyle,
+                                        ...commonContentStyle,
+                                        headerShadowVisible: true,
+                                    }}
+                                />
 
-                            <Stack.Screen
-                                name="log/[logId]"
-                                options={{
-                                    title: 'Log Details',
-                                    headerLargeTitle: true,
-                                    ...commonHeaderStyle,
-                                    ...commonContentStyle,
-                                    headerShadowVisible: true,
-                                }}
-                            />
-                        </Stack>
-                    </PersistQueryClientProvider>
-                </SuperwallProvider>
-            </KeyboardProvider>
-        </GestureHandlerRootView>
+                                <Stack.Screen
+                                    name="collection/[collectionId]/add"
+                                    options={{
+                                        title: 'New Record',
+                                        headerLargeTitle: true,
+                                        ...commonHeaderStyle,
+                                        ...commonContentStyle,
+                                        headerShadowVisible: true,
+                                    }}
+                                />
+
+                                <Stack.Screen
+                                    name="log/[logId]"
+                                    options={{
+                                        title: 'Log Details',
+                                        headerLargeTitle: true,
+                                        ...commonHeaderStyle,
+                                        ...commonContentStyle,
+                                        headerShadowVisible: true,
+                                    }}
+                                />
+                            </Stack>
+                        </PersistQueryClientProvider>
+                    </SuperwallProvider>
+                </KeyboardProvider>
+            </GestureHandlerRootView>
+        </SafeAreaProvider>
     )
 }
 

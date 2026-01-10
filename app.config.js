@@ -47,10 +47,24 @@ module.exports = ({ config }) => {
             },
             // googleServicesFile: './google-services.json',
             playStoreUrl: process.env.EXPO_PUBLIC_ANDROID_STORE_URL,
-            predictiveBackGestureEnabled: true,
+            predictiveBackGestureEnabled: false,
         },
 
         plugins: [
+            [
+                'expo-build-properties',
+                {
+                    ios: {
+                        networkInspector: false,
+                    },
+                    android: {
+                        usesCleartextTraffic: true,
+                        minSdkVersion: 24,
+                        targetSdkVersion: 35,
+                    },
+                },
+            ],
+            './plugins/withAndroidHeap',
             'expo-router',
             [
                 'expo-splash-screen',
@@ -59,15 +73,6 @@ module.exports = ({ config }) => {
                     resizeMode: 'contain',
                     backgroundColor: '#181A1B',
                     imageWidth: 200,
-                },
-            ],
-            [
-                'expo-build-properties',
-                {
-                    ios: {
-                        networkInspector: false,
-                    },
-                    android: { usesCleartextTraffic: true, minSdkVersion: 26 },
                 },
             ],
             'expo-quick-actions',
@@ -87,6 +92,9 @@ module.exports = ({ config }) => {
         extra: {
             router: {
                 origin: false,
+            },
+            eas: {
+                projectId: process.env.EXPO_PUBLIC_EAS_PROJECT_ID,
             },
         },
     }

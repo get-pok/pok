@@ -1,20 +1,23 @@
 import buildPlaceholder from '@/components/base/Placeholder'
 import RefreshControl from '@/components/base/RefreshControl'
 import Text from '@/components/base/Text'
+import { useFlashlistProps } from '@/lib/hooks'
 import getClient from '@/lib/pb'
 import { invalidateCurrentConnection, queryClient } from '@/lib/query'
 import { storage } from '@/lib/storage'
 import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
+import { HeaderButton } from '@react-navigation/elements'
 import * as Sentry from '@sentry/react-native'
 import { FlashList } from '@shopify/flash-list'
 import { useQuery } from '@tanstack/react-query'
+import { isLiquidGlassAvailable } from 'expo-glass-effect'
 import * as Haptics from 'expo-haptics'
 import * as QuickActions from 'expo-quick-actions'
 import { router, useNavigation } from 'expo-router'
 import * as StoreReview from 'expo-store-review'
-import { usePlacement, useUser } from 'expo-superwall'
+import { usePlacement, useSuperwall, useUser } from 'expo-superwall'
 import ms from 'ms'
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Alert, Image, Platform, TouchableOpacity, View } from 'react-native'
@@ -27,6 +30,7 @@ const log = (...args: any[]) => {
 export default function CollectionsScreen() {
     const { registerPlacement } = usePlacement()
     const { subscriptionStatus } = useUser()
+    const { getPresentationResult } = useSuperwall()
     const navigation = useNavigation()
     const [searchString, setSearchString] = useState('')
 
@@ -92,39 +96,70 @@ export default function CollectionsScreen() {
 
         return emptyCollections
     }, [collectionsQuery.isLoading, collectionsQuery.isError, filteredCollections.length])
+    const { overrideProps } = useFlashlistProps(Placeholder)
 
     useEffect(() => {
-        if (subscriptionStatus.status !== 'INACTIVE') return
-
-        setTimeout(() => {
-            registerPlacement({
-                placement: 'LifetimeOffer_1',
-                feature: () => {
-                    // WidgetKitModule.setIsSubscribed(true)
-                    Alert.alert('Congrats, you unlocked lifetime access to Pok.')
-                },
-            }).catch((error) => {
-                Sentry.captureException(error)
-                console.error('Error registering LifetimeOffer_1', error)
+        if (subscriptionStatus.status !== 'INACTIVE') {
+            QuickActions.isSupported().then((supported) => {
+                if (!supported) return
+                QuickActions.setItems(
+                    Platform.OS === 'ios'
+                        ? [
+                              {
+                                  id: '0',
+                                  title: 'Bugs?',
+                                  subtitle: 'Open an issue on GitHub!',
+                                  icon: 'mail',
+                              },
+                          ]
+                        : []
+                )
             })
-        }, 1000)
+            return
+        }
 
-        QuickActions.isSupported().then((supported) => {
-            if (!supported) return
-            QuickActions.setItems([
-                {
-                    id: '0',
-                    title:
-                        Platform.OS === 'android'
-                            ? "Don't delete me ): Tap here!"
-                            : "Don't delete me ):",
-                    subtitle: "Here's 50% off for life!",
-                    icon: 'love',
-                    params: { href: '/showLfo1=1' },
-                },
-            ])
-        })
-    }, [registerPlacement, subscriptionStatus.status])
+        try {
+            getPresentationResult('LifetimeOffer_1').then((presentationResult) => {
+                if (
+                    ['placementnotfound', 'noaudiencematch'].includes(
+                        presentationResult.type.toLowerCase()
+                    )
+                ) {
+                    return
+                }
+                setTimeout(() => {
+                    registerPlacement({
+                        placement: 'LifetimeOffer_1',
+                        feature: () => {
+                            // WidgetKitModule.setIsSubscribed(true)
+                            Alert.alert('Congrats!', 'You unlocked lifetime access to Pok.')
+                        },
+                    }).catch((error) => {
+                        Sentry.captureException(error)
+                        console.error('Error registering LifetimeOffer_1', error)
+                    })
+                }, 1000)
+            })
+
+            QuickActions.isSupported().then((supported) => {
+                if (!supported) return
+                QuickActions.setItems([
+                    {
+                        id: '0',
+                        title:
+                            Platform.OS === 'android'
+                                ? "Don't delete me ): Tap here!"
+                                : "Don't delete me ):",
+                        subtitle: "Here's 50% off for life!",
+                        icon: 'love',
+                        params: { href: '/?showLfo1=1' },
+                    },
+                ])
+            })
+        } catch (error) {
+            Sentry.captureException(error)
+        }
+    }, [registerPlacement, subscriptionStatus.status, getPresentationResult])
 
     useLayoutEffect(() => {
         navigation.setOptions({
@@ -140,6 +175,11 @@ export default function CollectionsScreen() {
                                 {
                                     title: connection.url,
                                     destructive: false,
+                                    systemIcon: isLiquidGlassAvailable()
+                                        ? connection.id === currentConnection?.id
+                                            ? 'smallcircle.filled.circle.fill'
+                                            : 'smallcircle.filled.circle'
+                                        : undefined,
                                     disabled: connection.id === currentConnection?.id,
                                 },
                                 {
@@ -158,7 +198,7 @@ export default function CollectionsScreen() {
                     onPress={async (e) => {
                         Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
 
-                        if (e.nativeEvent.name === 'Remove Connection') {
+                        if (e.nativeEvent.name === 'Remove') {
                             const [connectionPath] = e.nativeEvent.indexPath // [connectionPath, actionPath]
 
                             Alert.alert(
@@ -236,20 +276,17 @@ export default function CollectionsScreen() {
                         }
                     }}
                 >
-                    <TouchableOpacity
+                    <HeaderButton
                         style={{
-                            height: 32,
-                            width: 32,
-                            borderRadius: 16,
-                            overflow: 'hidden',
-                            marginRight: 10,
+                            marginRight: isLiquidGlassAvailable() ? undefined : 10,
                         }}
                     >
                         <Image
                             source={require('@/assets/icon.png')}
-                            style={{ flex: 1, width: 32 }}
+                            borderRadius={16}
+                            style={{ width: 32, height: 32 }}
                         />
-                    </TouchableOpacity>
+                    </HeaderButton>
                 </ContextMenu>
             ),
             headerSearchBarOptions: {
@@ -257,11 +294,21 @@ export default function CollectionsScreen() {
                 hideWhenScrolling: true,
                 barTintColor: COLORS.bgLevel2,
                 textColor: COLORS.text,
-                placeholderTextColor: COLORS.textMuted, // android
                 onChangeText: (event: any) => setSearchString(event.nativeEvent.text),
+                autoCapitalize: 'none',
+                tintColor: COLORS.bgLevel2,
+                hintTextColor: COLORS.textMuted,
+                headerIconColor: COLORS.bgLevel2,
             },
         })
-    }, [navigation, connections, currentConnection, removeConnection, switchConnection])
+    }, [
+        navigation,
+        connections,
+        currentConnection,
+        removeConnection,
+        switchConnection,
+        registerPlacement,
+    ])
 
     return (
         <FlashList
@@ -269,13 +316,7 @@ export default function CollectionsScreen() {
             refreshControl={<RefreshControl onRefresh={collectionsQuery.refetch} />}
             showsVerticalScrollIndicator={false}
             data={filteredCollections}
-            overrideProps={
-                Placeholder && {
-                    contentContainerStyle: {
-                        flex: 1,
-                    },
-                }
-            }
+            overrideProps={overrideProps}
             ListEmptyComponent={Placeholder}
             renderItem={({ item: collection, index: collectionIndex }) => (
                 <TouchableOpacity

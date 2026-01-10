@@ -1,6 +1,7 @@
 import { useFocusEffect, useGlobalSearchParams } from 'expo-router'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useCallback } from 'react'
+import { Platform } from 'react-native'
 
 export function useSearchParams<T extends Record<string, string>>() {
     //! `useLocalSearchParams` only works on the initial render (when going to /home)
@@ -21,4 +22,24 @@ export function useSearchParams<T extends Record<string, string>>() {
     )
 
     return _searchParams
+}
+
+export function useFlashlistProps(placeholder?: React.ReactNode) {
+    const isAndroid = useMemo(() => Platform.OS === 'android', [])
+
+    if (isAndroid) {
+        return {
+            overrideProps: undefined,
+        }
+    }
+
+    return {
+        overrideProps: placeholder
+            ? {
+                  contentContainerStyle: {
+                      flex: 1,
+                  },
+              }
+            : undefined,
+    }
 }

@@ -149,6 +149,10 @@ export default function LogScreen() {
                             }
                             placeholder="No value"
                             multiline={fieldValue?.length > 100}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            autoComplete="off"
+                            keyboardAppearance="dark"
                         />
                     </View>
                 )
@@ -188,6 +192,10 @@ export default function LogScreen() {
                             editable={false}
                             value={fieldValue}
                             multiline={fieldValue?.length > 100}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            autoComplete="off"
+                            keyboardAppearance="dark"
                         />
                     </View>
                 )

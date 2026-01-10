@@ -1,4 +1,5 @@
 import ActivityIndicator from '@/components/base/ActivityIndicator'
+import HeaderItem from '@/components/base/HeaderItem'
 import { HeaderTouchableOpacity } from '@/components/base/HeaderTouchableOpacity'
 import buildPlaceholder from '@/components/base/Placeholder'
 import RefreshControl from '@/components/base/RefreshControl'
@@ -11,6 +12,7 @@ import Clipboard from '@react-native-clipboard/clipboard'
 import * as Sentry from '@sentry/react-native'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import Checkbox from 'expo-checkbox'
+import { isLiquidGlassAvailable } from 'expo-glass-effect'
 import * as Haptics from 'expo-haptics'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useNavigation } from 'expo-router'
@@ -202,7 +204,13 @@ export default function RecordScreen() {
             title: record[primaryColumn] || '',
             headerRight: isLoading
                 ? () => (
-                      <ActivityIndicator style={{ marginRight: 10 }} sm={true} monochrome={true} />
+                      <HeaderItem>
+                          <ActivityIndicator
+                              style={isLiquidGlassAvailable() ? undefined : { marginRight: 10 }}
+                              sm={true}
+                              monochrome={true}
+                          />
+                      </HeaderItem>
                   )
                 : hasChanges
                   ? () => (
@@ -211,9 +219,13 @@ export default function RecordScreen() {
                                 if (!hasChanges) return
                                 updateRecordMutation.mutate()
                             }}
-                            style={{ padding: 10 }}
+                            style={isLiquidGlassAvailable() ? undefined : { padding: 10 }}
                         >
-                            <Ionicons name="save" size={20} color={COLORS.text} />
+                            <Ionicons
+                                name="save"
+                                size={isLiquidGlassAvailable() ? 24 : 20}
+                                color={COLORS.text}
+                            />
                         </HeaderTouchableOpacity>
                     )
                   : () => (
@@ -299,18 +311,22 @@ export default function RecordScreen() {
                             }}
                         >
                             <HeaderTouchableOpacity
-                                style={{
-                                    backgroundColor: COLORS.bgLevel2,
-                                    justifyContent: 'center',
-                                    alignItems: 'center',
-                                    borderRadius: 16,
-                                    height: 32,
-                                    width: 32,
-                                }}
+                                style={
+                                    isLiquidGlassAvailable()
+                                        ? undefined
+                                        : {
+                                              backgroundColor: COLORS.bgLevel2,
+                                              justifyContent: 'center',
+                                              alignItems: 'center',
+                                              borderRadius: 16,
+                                              height: 32,
+                                              width: 32,
+                                          }
+                                }
                             >
                                 <Ionicons
                                     name="ellipsis-horizontal-sharp"
-                                    size={18}
+                                    size={isLiquidGlassAvailable() ? 32 : 18}
                                     color={COLORS.text}
                                 />
                             </HeaderTouchableOpacity>
@@ -546,6 +562,10 @@ export default function RecordScreen() {
                             placeholder="Enter value"
                             placeholderTextColor={COLORS.textMuted}
                             multiline={fieldValue?.length > 100}
+                            autoCapitalize="none"
+                            autoCorrect={false}
+                            autoComplete="off"
+                            keyboardAppearance="dark"
                         />
                     </Field>
                 )

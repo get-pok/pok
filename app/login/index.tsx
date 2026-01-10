@@ -9,6 +9,7 @@ import PocketBase from 'pocketbase'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Button, Image, Platform, TextInput, TouchableOpacity, View } from 'react-native'
 import { KeyboardAwareScrollView } from 'react-native-keyboard-controller'
+import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function LoginScreen() {
     const navigation = useNavigation()
@@ -46,7 +47,7 @@ export default function LoginScreen() {
                 return client.authStore
             } catch (error) {
                 console.error('[validateAuth] error', error)
-                Alert.alert('Invalid token', 'Please enter a valid Vercel API token')
+                Alert.alert('Invalid token', 'Please enter valid Pocketbase credentials')
                 return undefined
             }
         },
@@ -108,7 +109,7 @@ export default function LoginScreen() {
             router.dismissTo('/')
         } catch (error) {
             console.error('[handleLogin] error', error)
-            Alert.alert('Error', 'Could not connect to Netlify')
+            Alert.alert('Error', 'Could not connect to Pocketbase instance')
         } finally {
             setIsLoading(false)
         }
@@ -127,165 +128,177 @@ export default function LoginScreen() {
     }, [navigation, isModal])
 
     return (
-        <KeyboardAwareScrollView
-            bottomOffset={20}
-            keyboardShouldPersistTaps="handled"
-            style={{
-                flex: 1,
-                paddingTop: isModal ? 60 : 120,
-                backgroundColor: COLORS.bgApp,
-            }}
-        >
-            {showCloseButton && (
-                <TouchableOpacity
-                    style={{
-                        position: 'absolute',
-                        top: -50, // to negate the paddingTop
-                        right: 30,
-                        backgroundColor: '#ffffff28',
-                        justifyContent: 'center',
-                        alignItems: 'center',
-                        borderRadius: 16,
-                        height: 32,
-                        width: 32,
-                    }}
-                    onPress={() => router.back()}
-                >
-                    <Ionicons name="close" size={20} color={COLORS.text} />
-                </TouchableOpacity>
-            )}
-
-            <View
+        <SafeAreaView style={{ flex: 1 }} edges={Platform.OS === 'android' ? ['top'] : []}>
+            <KeyboardAwareScrollView
+                bottomOffset={20}
+                keyboardShouldPersistTaps="handled"
                 style={{
                     flex: 1,
-                    flexDirection: 'column',
-                    justifyContent: 'center',
-                    alignSelf: 'center',
-                    gap: 48,
-                    maxWidth: 320,
-                    width: '100%',
+                    paddingTop: isModal ? 60 : 120,
+                    backgroundColor: COLORS.bgApp,
                 }}
             >
-                <View style={{ flexDirection: 'column', alignItems: 'center' }}>
-                    <Image
-                        source={require('../../assets/icon.png')}
+                {showCloseButton && (
+                    <TouchableOpacity
                         style={{
-                            width: 250,
-                            height: 250,
-                            // extra
-                            marginBottom: 24,
-                            borderRadius: 12,
+                            position: 'absolute',
+                            top: -50, // to negate the paddingTop
+                            right: 30,
+                            backgroundColor: '#ffffff28',
+                            justifyContent: 'center',
+                            alignItems: 'center',
+                            borderRadius: 16,
+                            height: 32,
+                            width: 32,
                         }}
-                        resizeMode="contain"
-                    />
-                    <Text
-                        style={{
-                            fontSize: 18,
-                            fontWeight: 700,
-                            textAlign: 'center',
-                            color: COLORS.text,
-                        }}
+                        onPress={() => router.back()}
                     >
-                        {isModal ? 'Add Connection' : 'Welcome to POK'}
-                    </Text>
-                    <Text
-                        style={{
-                            fontSize: 15,
-                            fontWeight: 400,
-                            textAlign: 'center',
-                            color: COLORS.warningLighter,
-                        }}
-                    >
-                        {isModal
-                            ? 'Add an API token for a new connection!'
-                            : 'Add your API token to get started!'}
-                    </Text>
-                </View>
+                        <Ionicons name="close" size={20} color={COLORS.text} />
+                    </TouchableOpacity>
+                )}
 
-                <View style={{ flexDirection: 'column', gap: 20 }}>
-                    <View style={{ flexDirection: 'column', gap: 4 }}>
-                        <Text style={{ color: COLORS.text }}>URL</Text>
-                        <TextInput
+                <View
+                    style={{
+                        flex: 1,
+                        flexDirection: 'column',
+                        justifyContent: 'center',
+                        alignSelf: 'center',
+                        gap: 48,
+                        maxWidth: 320,
+                        width: '100%',
+                    }}
+                >
+                    <View style={{ flexDirection: 'column', alignItems: 'center' }}>
+                        <Image
+                            source={require('../../assets/icon.png')}
                             style={{
-                                height: 48,
-                                paddingHorizontal: 16,
-                                borderRadius: 8,
-                                backgroundColor: COLORS.bgLevel1,
-                                color: COLORS.infoLighter,
-                                fontSize: 16,
-                                borderWidth: 1,
-                                borderColor: COLORS.hr,
-                                borderStyle: 'solid',
+                                width: 250,
+                                height: 250,
+                                // extra
+                                marginBottom: 24,
+                                borderRadius: 12,
                             }}
-                            placeholder="Your Pocketbase URL"
-                            placeholderTextColor={COLORS.textMuted}
-                            onChangeText={(text) => {
-                                urlRef.current = text
-                            }}
-                            returnKeyLabel="Connect"
-                            returnKeyType="go"
-                            onSubmitEditing={handleLogin}
+                            resizeMode="contain"
                         />
-                    </View>
-                    <View style={{ flexDirection: 'column', gap: 4 }}>
-                        <Text style={{ color: COLORS.text }}>Email</Text>
-                        <TextInput
+                        <Text
                             style={{
-                                height: 48,
-                                paddingHorizontal: 16,
-                                borderRadius: 8,
-                                backgroundColor: COLORS.bgLevel1,
-                                color: COLORS.infoLighter,
-                                fontSize: 16,
-                                borderWidth: 1,
-                                borderColor: COLORS.hr,
-                                borderStyle: 'solid',
+                                fontSize: 18,
+                                fontWeight: 700,
+                                textAlign: 'center',
+                                color: COLORS.text,
                             }}
-                            placeholder="Enter an email"
-                            placeholderTextColor={COLORS.textMuted}
-                            onChangeText={(text) => {
-                                emailRef.current = text
-                            }}
-                            returnKeyLabel="Connect"
-                            returnKeyType="go"
-                            onSubmitEditing={handleLogin}
-                        />
-                    </View>
-                    <View style={{ flexDirection: 'column', gap: 4 }}>
-                        <Text style={{ color: COLORS.text }}>Password</Text>
-                        <TextInput
+                        >
+                            {isModal ? 'Add Connection' : 'Welcome to POK'}
+                        </Text>
+                        <Text
                             style={{
-                                height: 48,
-                                paddingHorizontal: 16,
-                                borderRadius: 8,
-                                backgroundColor: COLORS.bgLevel1,
-                                color: COLORS.infoLighter,
-                                fontSize: 16,
-                                borderWidth: 1,
-                                borderColor: COLORS.hr,
-                                borderStyle: 'solid',
+                                fontSize: 15,
+                                fontWeight: 400,
+                                textAlign: 'center',
+                                color: COLORS.warningLighter,
                             }}
-                            placeholder="Enter a password"
-                            placeholderTextColor={COLORS.textMuted}
-                            secureTextEntry={true}
-                            onChangeText={(text) => {
-                                passwordRef.current = text
-                            }}
-                            returnKeyLabel="Connect"
-                            returnKeyType="go"
-                            onSubmitEditing={handleLogin}
-                        />
+                        >
+                            {isModal
+                                ? 'Add an API token for a new connection!'
+                                : 'Add your API token to get started!'}
+                        </Text>
                     </View>
-                    <View style={{ marginTop: 10 }}>
-                        <Button
-                            title={isLoading ? 'Connecting...' : 'Connect'}
-                            onPress={handleLogin}
-                            disabled={isLoading}
-                            color={COLORS.infoLighter}
-                        />
+
+                    <View style={{ flexDirection: 'column', gap: 20 }}>
+                        <View style={{ flexDirection: 'column', gap: 4 }}>
+                            <Text style={{ color: COLORS.text }}>URL</Text>
+                            <TextInput
+                                style={{
+                                    height: 48,
+                                    paddingHorizontal: 16,
+                                    borderRadius: 8,
+                                    backgroundColor: COLORS.bgLevel1,
+                                    color: COLORS.infoLighter,
+                                    fontSize: 16,
+                                    borderWidth: 1,
+                                    borderColor: COLORS.hr,
+                                    borderStyle: 'solid',
+                                }}
+                                placeholder="Your Pocketbase URL"
+                                placeholderTextColor={COLORS.textMuted}
+                                onChangeText={(text) => {
+                                    urlRef.current = text
+                                }}
+                                returnKeyLabel="Next"
+                                returnKeyType="next"
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                autoComplete="off"
+                                keyboardAppearance="dark"
+                            />
+                        </View>
+                        <View style={{ flexDirection: 'column', gap: 4 }}>
+                            <Text style={{ color: COLORS.text }}>Email</Text>
+                            <TextInput
+                                style={{
+                                    height: 48,
+                                    paddingHorizontal: 16,
+                                    borderRadius: 8,
+                                    backgroundColor: COLORS.bgLevel1,
+                                    color: COLORS.infoLighter,
+                                    fontSize: 16,
+                                    borderWidth: 1,
+                                    borderColor: COLORS.hr,
+                                    borderStyle: 'solid',
+                                }}
+                                placeholder="Enter an email"
+                                placeholderTextColor={COLORS.textMuted}
+                                onChangeText={(text) => {
+                                    emailRef.current = text
+                                }}
+                                returnKeyLabel="Next"
+                                returnKeyType="next"
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                autoComplete="off"
+                                keyboardAppearance="dark"
+                            />
+                        </View>
+                        <View style={{ flexDirection: 'column', gap: 4 }}>
+                            <Text style={{ color: COLORS.text }}>Password</Text>
+                            <TextInput
+                                style={{
+                                    height: 48,
+                                    paddingHorizontal: 16,
+                                    borderRadius: 8,
+                                    backgroundColor: COLORS.bgLevel1,
+                                    color: COLORS.infoLighter,
+                                    fontSize: 16,
+                                    borderWidth: 1,
+                                    borderColor: COLORS.hr,
+                                    borderStyle: 'solid',
+                                }}
+                                placeholder="Enter a password"
+                                placeholderTextColor={COLORS.textMuted}
+                                secureTextEntry={true}
+                                onChangeText={(text) => {
+                                    passwordRef.current = text
+                                }}
+                                returnKeyLabel="Connect"
+                                returnKeyType="go"
+                                onSubmitEditing={handleLogin}
+                                autoCapitalize="none"
+                                autoCorrect={false}
+                                autoComplete="off"
+                                keyboardAppearance="dark"
+                            />
+                        </View>
+                        <View style={{ marginTop: 10 }}>
+                            <Button
+                                title={isLoading ? 'Connecting...' : 'Connect'}
+                                onPress={handleLogin}
+                                disabled={isLoading}
+                                color={COLORS.infoLighter}
+                            />
+                        </View>
                     </View>
                 </View>
-            </View>
-        </KeyboardAwareScrollView>
+            </KeyboardAwareScrollView>
+        </SafeAreaView>
     )
 }
