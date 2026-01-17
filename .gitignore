@@ -39,7 +39,7 @@ yarn-error.*
 ios/
 android/
 
-.env
+.env*
 
 google-services.json
 *.apk
