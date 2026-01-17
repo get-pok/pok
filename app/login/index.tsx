@@ -5,6 +5,7 @@ import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
 import { router, useNavigation } from 'expo-router'
+import { usePlacement } from 'expo-superwall'
 import PocketBase from 'pocketbase'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import { Alert, Button, Image, Platform, TextInput, TouchableOpacity, View } from 'react-native'
@@ -13,6 +14,7 @@ import { SafeAreaView } from 'react-native-safe-area-context'
 
 export default function LoginScreen() {
     const navigation = useNavigation()
+    const { registerPlacement } = usePlacement()
 
     const connections = usePersistedStore((state) => state.connections)
     const addConnection = usePersistedStore((state) => state.addConnection)
@@ -97,6 +99,12 @@ export default function LoginScreen() {
 
             switchConnection({ connectionId: validatedAuth.record.id })
 
+            if (connections.length === 1) {
+                registerPlacement({
+                    placement: 'SuccessfulLogin',
+                }).catch()
+            }
+
             await queryClient.prefetchQuery({
                 queryKey: ['settings'],
                 queryFn: async () => {
@@ -113,7 +121,7 @@ export default function LoginScreen() {
         } finally {
             setIsLoading(false)
         }
-    }, [validateAuth, switchConnection, addConnection, connections])
+    }, [validateAuth, switchConnection, addConnection, connections, registerPlacement])
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
     useEffect(() => {
@@ -131,12 +139,18 @@ export default function LoginScreen() {
         <SafeAreaView style={{ flex: 1 }} edges={Platform.OS === 'android' ? ['top'] : []}>
             <KeyboardAwareScrollView
                 bottomOffset={20}
+                extraKeyboardSpace={70}
                 keyboardShouldPersistTaps="handled"
                 style={{
                     flex: 1,
-                    paddingTop: isModal ? 60 : 120,
                     backgroundColor: COLORS.bgApp,
                 }}
+                contentContainerStyle={{
+                    flexGrow: 1,
+                    paddingTop: isModal ? 60 : 120,
+                    paddingBottom: 280,
+                }}
+                showsVerticalScrollIndicator={false}
             >
                 {showCloseButton && (
                     <TouchableOpacity
@@ -159,7 +173,7 @@ export default function LoginScreen() {
 
                 <View
                     style={{
-                        flex: 1,
+                        flexGrow: 1,
                         flexDirection: 'column',
                         justifyContent: 'center',
                         alignSelf: 'center',

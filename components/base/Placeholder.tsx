@@ -14,8 +14,8 @@ export default function buildPlaceholder({
     isLoading: boolean
     isError: boolean
     hasData: boolean | undefined
-    emptyLabel: string
-    errorLabel: string
+    emptyLabel: string | React.ReactNode
+    errorLabel: string | React.ReactNode
 }) {
     if (isLoading) {
         return (
@@ -37,7 +37,7 @@ export default function buildPlaceholder({
                     }}
                     numberOfLines={10}
                 >
-                    {errorLabel}
+                    {typeof errorLabel === 'string' ? <Text>{errorLabel}</Text> : errorLabel}
                 </Text>
             </PlaceholderRoot>
         )
@@ -55,7 +55,7 @@ export default function buildPlaceholder({
                     }}
                     numberOfLines={10}
                 >
-                    {emptyLabel}
+                    {typeof emptyLabel === 'string' ? <Text>{emptyLabel}</Text> : emptyLabel}
                 </Text>
             </PlaceholderRoot>
         )

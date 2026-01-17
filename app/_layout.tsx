@@ -86,7 +86,7 @@ function RootLayout() {
     return (
         <SafeAreaProvider>
             <GestureHandlerRootView>
-                <KeyboardProvider>
+                <KeyboardProvider statusBarTranslucent={true} navigationBarTranslucent={true}>
                     <SuperwallProvider
                         apiKeys={{
                             ios: process.env.EXPO_PUBLIC_IOS_SUPERWALL_API_KEY,
@@ -107,6 +107,18 @@ function RootLayout() {
                                     navigationBarHidden: true,
                                 }}
                             >
+                                <Stack.Screen
+                                    name="index"
+                                    options={{
+                                        title: '',
+                                        headerShown: false,
+                                        gestureEnabled: false,
+                                        contentStyle: {
+                                            backgroundColor: COLORS.bgApp,
+                                        },
+                                    }}
+                                />
+
                                 <Stack.Screen
                                     name="onboard/index"
                                     options={{
