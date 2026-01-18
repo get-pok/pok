@@ -8,12 +8,14 @@ import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
 import { FlashList } from '@shopify/flash-list'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
+import Checkbox from 'expo-checkbox'
 import { isLiquidGlassAvailable } from 'expo-glass-effect'
 import * as Haptics from 'expo-haptics'
-import { router, useLocalSearchParams, useNavigation } from 'expo-router'
-import { useLayoutEffect, useMemo, useState } from 'react'
-import { ScrollView, TouchableOpacity, View } from 'react-native'
+import { router, useFocusEffect, useLocalSearchParams, useNavigation } from 'expo-router'
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react'
+import { Alert, ScrollView, TouchableOpacity, View } from 'react-native'
+import ContextMenu from 'react-native-context-menu-view'
 import { useDebounce } from 'use-debounce'
 
 const log = (...args: any[]) => {
@@ -21,13 +23,63 @@ const log = (...args: any[]) => {
 }
 
 export default function CollectionScreen() {
-    const { collectionId } = useLocalSearchParams<{ collectionId: string }>()
+    const { collectionId, _pickerMode, _targetField, _returnTo, _isArrayRelation } =
+        useLocalSearchParams<{
+            collectionId: string
+            _pickerMode?: string
+            _targetField?: string
+            _returnTo?: string
+            _isArrayRelation?: string
+        }>()
     const navigation = useNavigation()
+    const queryClient = useQueryClient()
+    const isPickerMode = useMemo(() => _pickerMode === 'true', [_pickerMode])
+    const isArrayRelation = useMemo(() => _isArrayRelation === 'true', [_isArrayRelation])
 
     const primaryColumns = usePersistedStore((state) => state.primaryColumns)
     const setPrimaryColumn = usePersistedStore((state) => state.setPrimaryColumn)
 
     const [filterString, setFilterString] = useState('')
+    const [isSelectionMode, setIsSelectionMode] = useState(false)
+    const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+    useFocusEffect(
+        useCallback(() => {
+            return () => {
+                setIsSelectionMode(false)
+                setSelectedIds(new Set())
+            }
+        }, [])
+    )
+
+    const toggleSelection = useCallback((id: string) => {
+        setSelectedIds((prev) => {
+            const next = new Set(prev)
+            if (next.has(id)) next.delete(id)
+            else next.add(id)
+            return next
+        })
+    }, [])
+
+    const deleteSelectedMutation = useMutation({
+        mutationFn: async () => {
+            const pb = await getClient()
+            await Promise.all(
+                Array.from(selectedIds).map((id) => pb.collection(collectionId).delete(id))
+            )
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({
+                queryKey: ['collection', collectionId, 'records', 'list'],
+            })
+            setSelectedIds(new Set())
+            setIsSelectionMode(false)
+        },
+        onError: (error) => {
+            Alert.alert('Error', error.message)
+        },
+    })
+
     const [debouncedFilterString] = useDebounce(filterString, 100)
 
     const collectionQuery = useQuery({
@@ -113,25 +165,129 @@ export default function CollectionScreen() {
     ])
     const { overrideProps } = useFlashlistProps(Placeholder)
 
-    useLayoutEffect(() => {
-        navigation.setOptions({
-            title: collectionQuery.data?.name
-                ? `${collectionQuery.data?.name} ` +
-                  (collectionRecordsQuery.data?.length !== undefined
-                      ? `(${collectionRecordsQuery.data.length})`
-                      : '')
-                : '',
-            headerRight: () => (
+    const getHeaderRight = useCallback(() => {
+        if (isPickerMode) {
+            if (!isArrayRelation) return undefined
+            return () => (
                 <HeaderTouchableOpacity
-                    onPress={() => router.push(`/collection/${collectionId}/add`)}
+                    onPress={() => {
+                        if (_returnTo && _targetField) {
+                            const selectedIdsStr = Array.from(selectedIds).join(',')
+                            router.dismissTo(
+                                `/collection/${_returnTo}/add?relationSelectedId=${selectedIdsStr}&relationTargetField=${_targetField}`
+                            )
+                        }
+                    }}
                 >
                     <Ionicons
-                        name={isLiquidGlassAvailable() ? 'add-sharp' : 'add-circle'}
-                        size={36}
+                        name="checkmark"
+                        size={isLiquidGlassAvailable() ? 28 : 24}
                         color={COLORS.info}
                     />
                 </HeaderTouchableOpacity>
-            ),
+            )
+        }
+
+        if (isSelectionMode) {
+            const actions = [
+                { title: 'Deselect All', systemIcon: 'xmark' },
+                ...(selectedIds.size > 0
+                    ? [
+                          {
+                              title: `Delete (${selectedIds.size})`,
+                              systemIcon: 'trash',
+                              destructive: true,
+                          },
+                      ]
+                    : []),
+            ]
+            return () => (
+                <ContextMenu
+                    dropdownMenuMode={true}
+                    actions={actions}
+                    onPress={(e) => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
+                        if (e.nativeEvent.name === 'Deselect All') {
+                            setSelectedIds(new Set())
+                            setIsSelectionMode(false)
+                        } else if (e.nativeEvent.name.startsWith('Delete')) {
+                            Alert.alert(
+                                'Delete Records',
+                                `Are you sure you want to delete ${selectedIds.size} record(s)?`,
+                                [
+                                    { text: 'Cancel', style: 'cancel' },
+                                    {
+                                        text: 'Delete',
+                                        style: 'destructive',
+                                        onPress: () => deleteSelectedMutation.mutate(),
+                                    },
+                                ]
+                            )
+                        }
+                    }}
+                >
+                    <HeaderTouchableOpacity>
+                        <Ionicons
+                            name="ellipsis-horizontal"
+                            size={isLiquidGlassAvailable() ? 32 : 18}
+                            color={COLORS.text}
+                        />
+                    </HeaderTouchableOpacity>
+                </ContextMenu>
+            )
+        }
+
+        return () => (
+            <ContextMenu
+                dropdownMenuMode={true}
+                actions={[
+                    { title: 'Add Record', systemIcon: 'plus' },
+                    { title: 'Select', systemIcon: 'checkmark' },
+                ]}
+                onPress={(e) => {
+                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                    if (e.nativeEvent.name === 'Add Record') {
+                        router.push(`/collection/${collectionId}/add`)
+                    } else if (e.nativeEvent.name === 'Select') {
+                        setIsSelectionMode(true)
+                    }
+                }}
+            >
+                <HeaderTouchableOpacity>
+                    <Ionicons
+                        name="ellipsis-horizontal"
+                        size={isLiquidGlassAvailable() ? 32 : 18}
+                        color={COLORS.text}
+                    />
+                </HeaderTouchableOpacity>
+            </ContextMenu>
+        )
+    }, [
+        isPickerMode,
+        isArrayRelation,
+        selectedIds,
+        _returnTo,
+        _targetField,
+        isSelectionMode,
+        collectionId,
+        deleteSelectedMutation.mutate,
+    ])
+
+    useLayoutEffect(() => {
+        const baseTitle = collectionQuery.data?.name
+            ? `${collectionQuery.data?.name} ` +
+              (collectionRecordsQuery.data?.length !== undefined
+                  ? `(${collectionRecordsQuery.data.length})`
+                  : '')
+            : ''
+
+        const title = isPickerMode
+            ? `Select ${collectionQuery.data?.name || ''}${isSelectionMode || isPickerMode ? ` (${selectedIds.size})` : ''}`
+            : baseTitle
+
+        navigation.setOptions({
+            title,
+            headerRight: getHeaderRight(),
             headerSearchBarOptions: {
                 placeholder: `Search term or filter like created > "${new Date().getFullYear()}-01-01"...`,
                 hideWhenScrolling: true,
@@ -144,7 +300,15 @@ export default function CollectionScreen() {
                 headerIconColor: COLORS.bgLevel2,
             },
         })
-    }, [navigation, collectionQuery.data?.name, collectionRecordsQuery.data?.length, collectionId])
+    }, [
+        navigation,
+        collectionQuery.data?.name,
+        collectionRecordsQuery.data?.length,
+        isPickerMode,
+        isSelectionMode,
+        selectedIds.size,
+        getHeaderRight,
+    ])
 
     return (
         <FlashList
@@ -154,8 +318,11 @@ export default function CollectionScreen() {
             data={primaryColumn ? records : []}
             overrideProps={overrideProps}
             ListEmptyComponent={Placeholder}
-            extraData={primaryColumn}
+            extraData={[primaryColumn, isSelectionMode, isPickerMode, isArrayRelation, selectedIds]}
             renderItem={({ item: record, index: recordIndex }) => {
+                const showCheckbox = isSelectionMode || (isPickerMode && isArrayRelation)
+                const isSelected = selectedIds.has(record.id)
+
                 return (
                     <TouchableOpacity
                         style={{
@@ -167,9 +334,29 @@ export default function CollectionScreen() {
                             alignItems: 'center',
                         }}
                         onPress={() => {
+                            if (isPickerMode && !isArrayRelation && _returnTo && _targetField) {
+                                router.dismissTo(
+                                    `/collection/${_returnTo}/add?relationSelectedId=${record.id}&relationTargetField=${_targetField}`
+                                )
+                                return
+                            }
+                            if (showCheckbox) {
+                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                toggleSelection(record.id)
+                                return
+                            }
                             router.push(`/collection/${collectionId}/${record.id}`)
                         }}
                     >
+                        {showCheckbox && (
+                            <View style={{ marginRight: 12 }}>
+                                <Checkbox
+                                    value={isSelected}
+                                    onValueChange={() => toggleSelection(record.id)}
+                                    color={isSelected ? COLORS.info : undefined}
+                                />
+                            </View>
+                        )}
                         <View style={{ flex: 1 }}>
                             <Text
                                 style={{
@@ -186,9 +373,15 @@ export default function CollectionScreen() {
                                     : record[primaryColumn!]}
                             </Text>
                         </View>
-                        <View style={{ alignItems: 'flex-end' }}>
-                            <Ionicons name="chevron-forward" color={COLORS.textMuted} size={24} />
-                        </View>
+                        {!showCheckbox && (
+                            <View style={{ alignItems: 'flex-end' }}>
+                                <Ionicons
+                                    name="chevron-forward"
+                                    color={COLORS.textMuted}
+                                    size={24}
+                                />
+                            </View>
+                        )}
                     </TouchableOpacity>
                 )
             }}

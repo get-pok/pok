@@ -19,7 +19,7 @@ import { useNavigation } from 'expo-router'
 import { usePlacement } from 'expo-superwall'
 import * as WebBrowser from 'expo-web-browser'
 import ms from 'ms'
-import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Alert, ScrollView, TextInput, TouchableOpacity, View } from 'react-native'
 import ContextMenu from 'react-native-context-menu-view'
 
@@ -329,7 +329,7 @@ export default function RecordScreen() {
                                 }
                             >
                                 <Ionicons
-                                    name="ellipsis-horizontal-sharp"
+                                    name="ellipsis-horizontal"
                                     size={isLiquidGlassAvailable() ? 32 : 18}
                                     color={COLORS.text}
                                 />
@@ -537,6 +537,18 @@ export default function RecordScreen() {
                     )
                 }
 
+                if (field.type === 'relation') {
+                    return (
+                        <RelationFieldDisplay
+                            key={field.id}
+                            fieldName={field.name}
+                            targetCollectionId={field.collectionId}
+                            value={fieldValue}
+                            backgroundColor={fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined}
+                        />
+                    )
+                }
+
                 return (
                     <Field
                         key={field.id}
@@ -597,5 +609,92 @@ function Field({
         >
             {children}
         </View>
+    )
+}
+
+function RelationFieldDisplay({
+    fieldName,
+    targetCollectionId,
+    value,
+    backgroundColor,
+}: {
+    fieldName: string
+    targetCollectionId: string
+    value: string | string[] | null
+    backgroundColor?: string
+}) {
+    const primaryColumns = usePersistedStore((state) => state.primaryColumns)
+    const primaryColumn = primaryColumns[targetCollectionId]
+
+    const selectedIds = useMemo(() => {
+        if (!value) return []
+        if (Array.isArray(value)) return value
+        return [value]
+    }, [value])
+
+    const selectedRecordsQuery = useQuery({
+        queryKey: ['collection', targetCollectionId, 'records', 'batch', selectedIds],
+        queryFn: async () => {
+            if (selectedIds.length === 0) return []
+            const pb = await getClient()
+            const records = await Promise.all(
+                selectedIds.map((id) =>
+                    pb
+                        .collection(targetCollectionId)
+                        .getOne(id)
+                        .catch(() => null)
+                )
+            )
+            return records.filter(Boolean)
+        },
+        enabled: selectedIds.length > 0,
+    })
+
+    const getRecordDisplayValue = useCallback(
+        (record: any) => {
+            if (primaryColumn && record[primaryColumn] !== undefined) {
+                const val = record[primaryColumn]
+                if (typeof val === 'boolean') return val ? 'True' : 'False'
+                return String(val)
+            }
+            if (record.name) return record.name
+            if (record.title) return record.title
+            if (record.email) return record.email
+            return record.id
+        },
+        [primaryColumn]
+    )
+
+    const displayValue = useMemo(() => {
+        if (selectedIds.length === 0) return 'None'
+        if (selectedRecordsQuery.isLoading) return 'Loading...'
+        if (!selectedRecordsQuery.data || selectedRecordsQuery.data.length === 0) {
+            return selectedIds.join(', ')
+        }
+
+        const names = selectedRecordsQuery.data.map(getRecordDisplayValue)
+        return names.join(', ')
+    }, [
+        selectedIds,
+        selectedRecordsQuery.data,
+        selectedRecordsQuery.isLoading,
+        getRecordDisplayValue,
+    ])
+
+    return (
+        <Field backgroundColor={backgroundColor}>
+            <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: 'bold' }}>
+                {fieldName}
+            </Text>
+            <View
+                style={{
+                    backgroundColor: COLORS.bgLevel2,
+                    borderRadius: 5,
+                    padding: 10,
+                }}
+            >
+                <Text style={{ color: COLORS.text, fontSize: 16 }}>{displayValue}</Text>
+            </View>
+        </Field>
     )
 }

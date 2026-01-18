@@ -4,6 +4,7 @@ import { HeaderTouchableOpacity } from '@/components/base/HeaderTouchableOpacity
 import buildPlaceholder from '@/components/base/Placeholder'
 import Text from '@/components/base/Text'
 import getClient from '@/lib/pb'
+import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
@@ -12,21 +13,32 @@ import { isLiquidGlassAvailable } from 'expo-glass-effect'
 import { router, useLocalSearchParams } from 'expo-router'
 import { useNavigation } from 'expo-router'
 import type React from 'react'
-import { useLayoutEffect, useMemo, useState } from 'react'
-import { Alert, ScrollView, TextInput, View } from 'react-native'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useState } from 'react'
+import { Alert, ScrollView, TextInput, TouchableOpacity, View } from 'react-native'
 
 // const log = (...args: any[]) => {
 //     console.log('[AddRecordScreen] ', ...args)
 // }
 
 export default function AddRecordScreen() {
-    const { collectionId } = useLocalSearchParams<{
+    const { collectionId, relationSelectedId, relationTargetField } = useLocalSearchParams<{
         collectionId: string
+        relationSelectedId?: string
+        relationTargetField?: string
     }>()
     const navigation = useNavigation()
     const queryClient = useQueryClient()
 
     const [newRecord, setNewRecord] = useState<Record<string, string | null | boolean>>({})
+
+    useEffect(() => {
+        if (relationSelectedId && relationTargetField) {
+            setNewRecord((prev) => ({
+                ...prev,
+                [relationTargetField]: relationSelectedId,
+            }))
+        }
+    }, [relationSelectedId, relationTargetField])
 
     const collectionQuery = useQuery({
         queryKey: ['collection', collectionId],
@@ -40,9 +52,20 @@ export default function AddRecordScreen() {
     const createRecordMutation = useMutation({
         mutationFn: async () => {
             const pb = await getClient()
+
+            const transformedRecord: Record<string, unknown> = { ...newRecord }
+            for (const field of collectionQuery.data?.fields || []) {
+                if (field.type === 'relation' && field.maxSelect !== 1) {
+                    const value = transformedRecord[field.name]
+                    if (typeof value === 'string' && value) {
+                        transformedRecord[field.name] = value.split(',').filter(Boolean)
+                    }
+                }
+            }
+
             const createdRecord = await pb
                 .collection(collectionId)
-                .create(newRecord)
+                .create(transformedRecord)
                 .catch((error) => {
                     if (error?.response?.data) {
                         throw new Error(JSON.stringify(error.response.data, null, 2))
@@ -52,7 +75,9 @@ export default function AddRecordScreen() {
             return createdRecord.id
         },
         onSuccess: (newRecordId) => {
-            queryClient.invalidateQueries({ queryKey: ['collection', collectionId, 'list'] })
+            queryClient.invalidateQueries({
+                queryKey: ['collection', collectionId, 'records', 'list'],
+            })
             router.back()
             router.push(`/collection/${collectionId}/${newRecordId}`)
         },
@@ -236,6 +261,21 @@ export default function AddRecordScreen() {
                     )
                 }
 
+                if (field.type === 'relation') {
+                    const isArrayRelation = field.maxSelect !== 1
+                    return (
+                        <RelationFieldSelector
+                            key={field.id}
+                            fieldName={field.name}
+                            targetCollectionId={field.collectionId}
+                            currentCollectionId={collectionId}
+                            selectedId={newRecord[field.name] as string | null}
+                            isArrayRelation={isArrayRelation}
+                            backgroundColor={fieldIndex % 2 === 0 ? COLORS.bgLevel1 : undefined}
+                        />
+                    )
+                }
+
                 return (
                     <Field
                         key={field.id}
@@ -295,5 +335,112 @@ function Field({
         >
             {children}
         </View>
+    )
+}
+
+function RelationFieldSelector({
+    fieldName,
+    targetCollectionId,
+    currentCollectionId,
+    selectedId,
+    isArrayRelation,
+    backgroundColor,
+}: {
+    fieldName: string
+    targetCollectionId: string
+    currentCollectionId: string
+    selectedId: string | null
+    isArrayRelation: boolean
+    backgroundColor?: string
+}) {
+    const primaryColumns = usePersistedStore((state) => state.primaryColumns)
+    const primaryColumn = primaryColumns[targetCollectionId]
+
+    const selectedIds = useMemo(() => {
+        if (!selectedId) return []
+        return selectedId.split(',').filter(Boolean)
+    }, [selectedId])
+
+    const selectedRecordsQuery = useQuery({
+        queryKey: ['collection', targetCollectionId, 'records', 'batch', selectedIds],
+        queryFn: async () => {
+            if (selectedIds.length === 0) return []
+            const pb = await getClient()
+            const records = await Promise.all(
+                selectedIds.map((id) =>
+                    pb
+                        .collection(targetCollectionId)
+                        .getOne(id)
+                        .catch(() => null)
+                )
+            )
+            return records.filter(Boolean)
+        },
+        enabled: selectedIds.length > 0,
+    })
+
+    const getRecordDisplayValue = useCallback(
+        (record: any) => {
+            if (primaryColumn && record[primaryColumn] !== undefined) {
+                const value = record[primaryColumn]
+                if (typeof value === 'boolean') return value ? 'True' : 'False'
+                return String(value)
+            }
+            if (record.name) return record.name
+            if (record.title) return record.title
+            if (record.email) return record.email
+            return record.id
+        },
+        [primaryColumn]
+    )
+
+    const displayValue = useMemo(() => {
+        if (selectedIds.length === 0) return null
+        if (selectedRecordsQuery.isLoading) return 'Loading...'
+        if (!selectedRecordsQuery.data || selectedRecordsQuery.data.length === 0) {
+            return selectedIds.join(', ')
+        }
+
+        const names = selectedRecordsQuery.data.map(getRecordDisplayValue)
+        return names.join(', ')
+    }, [
+        selectedIds,
+        selectedRecordsQuery.data,
+        selectedRecordsQuery.isLoading,
+        getRecordDisplayValue,
+    ])
+
+    return (
+        <Field backgroundColor={backgroundColor}>
+            <Text style={{ color: COLORS.text, fontSize: 16, fontWeight: 'bold' }}>
+                {fieldName}
+            </Text>
+
+            <TouchableOpacity
+                style={{
+                    backgroundColor: COLORS.bgLevel2,
+                    borderRadius: 5,
+                    padding: 10,
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                }}
+                onPress={() => {
+                    router.push(
+                        `/collection/${targetCollectionId}?_pickerMode=true&_targetField=${fieldName}&_returnTo=${currentCollectionId}&_isArrayRelation=${isArrayRelation}`
+                    )
+                }}
+            >
+                <Text
+                    style={{
+                        color: displayValue ? COLORS.text : COLORS.textMuted,
+                        fontSize: 16,
+                    }}
+                >
+                    {displayValue || 'Select...'}
+                </Text>
+                <Ionicons name="chevron-forward" color={COLORS.textMuted} size={20} />
+            </TouchableOpacity>
+        </Field>
     )
 }
