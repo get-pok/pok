@@ -97,7 +97,9 @@ export default function RecordScreen() {
             await pb.collection(collectionId).delete(recordId)
         },
         onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ['collection', collectionId, 'list'] })
+            queryClient.invalidateQueries({
+                queryKey: ['collection', collectionId, 'records', 'list'],
+            })
             router.back()
         },
         onError: (error) => {
@@ -125,7 +127,9 @@ export default function RecordScreen() {
             return createdRecord.id
         },
         onSuccess: (newRecordId) => {
-            queryClient.invalidateQueries({ queryKey: ['collection', collectionId, 'list'] })
+            queryClient.invalidateQueries({
+                queryKey: ['collection', collectionId, 'records', 'list'],
+            })
             router.back()
             router.push(`/collection/${collectionId}/${newRecordId}`)
         },
