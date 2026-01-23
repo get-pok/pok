@@ -40,6 +40,13 @@ const mmkvPersister = createSyncStoragePersister({
 // }
 // clearStorage()
 
+export const unstable_settings = {
+    // initialRouteName: 'index',
+    'collection/[collectionId]/index': {
+        initialRouteName: '(tabs)',
+    },
+}
+
 function RootLayout() {
     const commonHeaderStyle = {
         headerTransparent: Platform.OS === 'ios',

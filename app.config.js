@@ -33,6 +33,9 @@ module.exports = ({ config }) => {
                 },
                 SKIncludeConsumableInAppPurchaseHistory: true,
             },
+            entitlements: {
+                'com.apple.security.application-groups': [process.env.EXPO_PUBLIC_WIDGET_GROUP],
+            },
         },
 
         androidNavigationBar: {
