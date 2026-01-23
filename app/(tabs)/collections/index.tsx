@@ -5,7 +5,7 @@ import Text from '@/components/base/Text'
 import { useFlashlistProps } from '@/lib/hooks'
 import getClient from '@/lib/pb'
 import { invalidateCurrentConnection, queryClient } from '@/lib/query'
-import { storage } from '@/lib/storage'
+import { mmkvStorage } from '@/lib/storage'
 import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
@@ -220,7 +220,7 @@ export default function CollectionsScreen() {
 
                                             // if we had 1 connection before, we will have none
                                             if (connections.length === 1) {
-                                                storage.clearAll()
+                                                mmkvStorage.clearAll()
                                                 router.dismissAll()
                                                 router.replace('/login')
                                                 queryClient.clear()
