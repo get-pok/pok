@@ -4,6 +4,7 @@ import { invalidateCurrentConnection, queryClient } from '@/lib/query'
 import { usePersistedStore } from '@/store/persisted'
 import { COLORS } from '@/theme/colors'
 import { Ionicons } from '@expo/vector-icons'
+import { useMutation } from '@tanstack/react-query'
 import { router, useNavigation } from 'expo-router'
 import { usePlacement } from 'expo-superwall'
 import PocketBase from 'pocketbase'
@@ -24,7 +25,6 @@ export default function LoginScreen() {
     const emailRef = useRef<string>('')
     const passwordRef = useRef<string>('')
 
-    const [isLoading, setIsLoading] = useState(false)
     const [isModal, setIsModal] = useState(false)
 
     const showCloseButton = useMemo(() => {
@@ -56,36 +56,30 @@ export default function LoginScreen() {
         []
     )
 
-    const handleLogin = useCallback(async () => {
-        const url = urlRef.current.trim() || ''
-        const email = emailRef.current.trim() || ''
-        const password = passwordRef.current.trim() || ''
+    const loginMutation = useMutation({
+        mutationFn: async () => {
+            const url = urlRef.current.trim() || ''
+            const email = emailRef.current.trim() || ''
+            const password = passwordRef.current.trim() || ''
 
-        if (!url) {
-            Alert.alert('Error', 'Please enter an URL')
-            return
-        }
+            if (!url) {
+                throw new Error('Please enter an URL')
+            }
 
-        if (!email || !password) {
-            Alert.alert('Error', 'Please enter an email and password')
-            return
-        }
+            if (!email || !password) {
+                throw new Error('Please enter an email and password')
+            }
 
-        setIsLoading(true)
-
-        try {
             const validatedAuth = await validateAuth({ url, email, password })
 
-            console.log('[handleLogin] validatedAuth', validatedAuth)
+            console.log('[loginMutation] validatedAuth', validatedAuth)
 
             if (!validatedAuth || !validatedAuth.record) {
-                Alert.alert('Error', 'Invalid token')
-                return
+                throw new Error('Invalid token')
             }
 
             if (connections.find((c) => c.url === url)) {
-                Alert.alert('Error', 'You are already connected to this instance')
-                return
+                throw new Error('You are already connected to this instance')
             }
 
             addConnection({
@@ -114,14 +108,16 @@ export default function LoginScreen() {
                 },
             })
 
+            return validatedAuth
+        },
+        onSuccess: () => {
             router.dismissTo('/')
-        } catch (error) {
-            console.error('[handleLogin] error', error)
-            Alert.alert('Error', 'Could not connect to Pocketbase instance')
-        } finally {
-            setIsLoading(false)
-        }
-    }, [validateAuth, switchConnection, addConnection, connections, registerPlacement])
+        },
+        onError: (error) => {
+            console.error('[loginMutation] error', error)
+            Alert.alert('Error', error.message || 'Could not connect to Pocketbase instance')
+        },
+    })
 
     // biome-ignore lint/correctness/useExhaustiveDependencies: <explanation>
     useEffect(() => {
@@ -295,7 +291,7 @@ export default function LoginScreen() {
                                 }}
                                 returnKeyLabel="Connect"
                                 returnKeyType="go"
-                                onSubmitEditing={handleLogin}
+                                onSubmitEditing={() => loginMutation.mutate()}
                                 autoCapitalize="none"
                                 autoCorrect={false}
                                 autoComplete="off"
@@ -304,9 +300,9 @@ export default function LoginScreen() {
                         </View>
                         <View style={{ marginTop: 10 }}>
                             <Button
-                                title={isLoading ? 'Connecting...' : 'Connect'}
-                                onPress={handleLogin}
-                                disabled={isLoading}
+                                title={loginMutation.isPending ? 'Connecting...' : 'Connect'}
+                                onPress={() => loginMutation.mutate()}
+                                disabled={loginMutation.isPending}
                                 color={COLORS.infoLighter}
                             />
                         </View>

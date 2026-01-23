@@ -2,6 +2,7 @@ import { HeaderTouchableOpacity } from '@/components/base/HeaderTouchableOpacity
 import buildPlaceholder from '@/components/base/Placeholder'
 import RefreshControl from '@/components/base/RefreshControl'
 import Text from '@/components/base/Text'
+import WidgetMessage from '@/components/base/WidgetMessage'
 import { useFlashlistProps } from '@/lib/hooks'
 import getClient from '@/lib/pb'
 import { usePersistedStore } from '@/store/persisted'
@@ -386,57 +387,63 @@ export default function CollectionScreen() {
                 )
             }}
             ListHeaderComponent={() => (
-                <ScrollView
-                    style={{
-                        // backgroundColor: 'red',
-                        paddingBottom: 16,
-                        borderBottomWidth: 1,
-                        borderColor: COLORS.hr,
-                        borderStyle: 'solid',
-                    }}
-                    contentContainerStyle={{
-                        flexDirection: 'row',
-                        alignItems: 'center',
-                        gap: 16,
-                        paddingHorizontal: 20,
-                    }}
-                    horizontal={true}
-                    showsHorizontalScrollIndicator={false}
-                >
-                    {collectionQuery.data?.fields.map((field) => (
-                        <TouchableOpacity
-                            key={field.id}
-                            style={{
-                                padding: 10,
-                                borderRadius: 10,
-                                backgroundColor:
-                                    primaryColumn === field.name
-                                        ? COLORS.bgLevel2
-                                        : COLORS.bgLevel1,
-                                borderWidth: primaryColumn !== field.name ? 1 : 0,
-                                borderColor: COLORS.hr,
-                                borderStyle: 'solid',
-                            }}
-                            onPress={() => {
-                                Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
-                                setPrimaryColumn(collectionId, field.name)
-                            }}
-                        >
-                            <Text
+                <View>
+                    <WidgetMessage
+                        message={`Create a shortcut for ${collectionQuery.data?.name || 'this collection'} on your homescreen!`}
+                        style={{ padding: 20, paddingBottom: 16, paddingTop: 0 }}
+                    />
+                    <ScrollView
+                        style={{
+                            // backgroundColor: 'red',
+                            paddingBottom: 16,
+                            borderBottomWidth: 1,
+                            borderColor: COLORS.hr,
+                            borderStyle: 'solid',
+                        }}
+                        contentContainerStyle={{
+                            flexDirection: 'row',
+                            alignItems: 'center',
+                            gap: 16,
+                            paddingHorizontal: 20,
+                        }}
+                        horizontal={true}
+                        showsHorizontalScrollIndicator={false}
+                    >
+                        {collectionQuery.data?.fields.map((field) => (
+                            <TouchableOpacity
+                                key={field.id}
                                 style={{
-                                    fontSize: 16,
-                                    color:
+                                    padding: 10,
+                                    borderRadius: 10,
+                                    backgroundColor:
                                         primaryColumn === field.name
-                                            ? COLORS.text
-                                            : COLORS.textMuted,
-                                    fontWeight: primaryColumn === field.name ? 500 : 400,
+                                            ? COLORS.bgLevel2
+                                            : COLORS.bgLevel1,
+                                    borderWidth: primaryColumn !== field.name ? 1 : 0,
+                                    borderColor: COLORS.hr,
+                                    borderStyle: 'solid',
+                                }}
+                                onPress={() => {
+                                    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
+                                    setPrimaryColumn(collectionId, field.name)
                                 }}
                             >
-                                {field.name}
-                            </Text>
-                        </TouchableOpacity>
-                    ))}
-                </ScrollView>
+                                <Text
+                                    style={{
+                                        fontSize: 16,
+                                        color:
+                                            primaryColumn === field.name
+                                                ? COLORS.text
+                                                : COLORS.textMuted,
+                                        fontWeight: primaryColumn === field.name ? 500 : 400,
+                                    }}
+                                >
+                                    {field.name}
+                                </Text>
+                            </TouchableOpacity>
+                        ))}
+                    </ScrollView>
+                </View>
             )}
         />
     )

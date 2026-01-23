@@ -1,5 +1,6 @@
 import buildPlaceholder from '@/components/base/Placeholder'
 import Text from '@/components/base/Text'
+import WidgetMessage from '@/components/base/WidgetMessage'
 import { LEVEL_COLORS, LEVEL_LABELS } from '@/lib/constants'
 import getClient from '@/lib/pb'
 import { COLORS } from '@/theme/colors'
@@ -105,6 +106,10 @@ export default function LogScreen() {
             contentInsetAdjustmentBehavior="automatic"
             contentContainerStyle={{ paddingBottom: 120 }}
         >
+            <WidgetMessage
+                message="Check logs with a widget on your homescreen!"
+                style={{ padding: 20, paddingBottom: 16, paddingTop: 8 }}
+            />
             {logFields.mainFields.map((field, fieldIndex) => {
                 const fieldValue = formatValue(field.value)
                 const displayName = field.key

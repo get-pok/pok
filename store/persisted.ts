@@ -7,8 +7,6 @@ export interface Connection {
     url: string
     email: string
     password: string
-    apiToken?: string
-    apiTokenExpiry?: number
 }
 
 interface PersistedStoreState {
