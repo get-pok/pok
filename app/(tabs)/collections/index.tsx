@@ -133,7 +133,6 @@ export default function CollectionsScreen() {
                     registerPlacement({
                         placement: 'LifetimeOffer_1',
                         feature: () => {
-                            // WidgetKitModule.setIsSubscribed(true)
                             Alert.alert('Congrats!', 'You unlocked lifetime access to Pok.')
                         },
                     }).catch((error) => {
