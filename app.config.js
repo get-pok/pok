@@ -84,6 +84,35 @@ module.exports = ({ config }) => {
                     organization: process.env.EXPO_PUBLIC_SENTRY_ORG,
                 },
             ],
+            'expo-font',
+            'expo-web-browser',
+            [
+                'expo-alternate-app-icons',
+                [
+                    {
+                        name: 'DatabaseDark',
+                        ios: './assets/icon-db-dark.png',
+                        android: {
+                            foregroundImage: './assets/icon-db-dark.png',
+                        },
+                    },
+                    {
+                        name: 'DatabaseLight',
+                        ios: './assets/icon-db-light.png',
+                        android: {
+                            foregroundImage: './assets/icon-db-light.png',
+                        },
+                    },
+                    {
+                        name: 'Gopher',
+                        ios: './assets/icon-gopher.png',
+                        android: {
+                            foregroundImage: './assets/icon-gopher.png',
+                        },
+                    },
+                ],
+            ],
+            '@bacons/apple-targets',
         ],
 
         experiments: {

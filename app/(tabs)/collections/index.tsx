@@ -1,3 +1,4 @@
+import { HeaderTouchableOpacity } from '@/components/base/HeaderTouchableOpacity'
 import buildPlaceholder from '@/components/base/Placeholder'
 import RefreshControl from '@/components/base/RefreshControl'
 import Text from '@/components/base/Text'
@@ -18,6 +19,7 @@ import * as QuickActions from 'expo-quick-actions'
 import { router, useNavigation } from 'expo-router'
 import * as StoreReview from 'expo-store-review'
 import { usePlacement, useSuperwall, useUser } from 'expo-superwall'
+import * as WebBrowser from 'expo-web-browser'
 import ms from 'ms'
 import { useEffect, useLayoutEffect, useMemo, useState } from 'react'
 import { Alert, Image, Platform, TouchableOpacity, View } from 'react-native'
@@ -287,6 +289,90 @@ export default function CollectionsScreen() {
                             style={{ width: 32, height: 32 }}
                         />
                     </HeaderButton>
+                </ContextMenu>
+            ),
+            headerRight: () => (
+                <ContextMenu
+                    dropdownMenuMode={true}
+                    actions={[
+                        {
+                            title: 'Icons',
+                            systemIcon: 'app.gift',
+                        },
+                        {
+                            title: 'Feedback',
+                            systemIcon: 'message',
+                        },
+                        {
+                            title: 'Rate',
+                            systemIcon: 'star.fill',
+                        },
+                    ]}
+                    onPress={async (e) => {
+                        Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Rigid)
+
+                        if (e.nativeEvent.name === 'Icons') {
+                            if (__DEV__) {
+                                router.push('/icons/')
+                                return
+                            }
+
+                            registerPlacement({
+                                placement: 'AppIcons',
+                                feature: () => {
+                                    router.push('/icons/')
+                                },
+                            })
+                            return
+                        }
+                        if (e.nativeEvent.name === 'Feedback') {
+                            await WebBrowser.openBrowserAsync(process.env.EXPO_PUBLIC_FEEDBACK_URL!)
+                            return
+                        }
+                        if (e.nativeEvent.name === 'Rate') {
+                            Alert.alert('Do you like Pok?', 'Let us know about your experience.', [
+                                {
+                                    text: 'No',
+                                    onPress: () => {
+                                        Alert.alert(
+                                            'Thank you!',
+                                            'Your review has been sent successfully.'
+                                        )
+                                    },
+                                },
+                                {
+                                    text: 'Yes',
+                                    onPress: () => {
+                                        if (
+                                            usePersistedStore.getState().installationTs <
+                                            Date.now() - ms('1d')
+                                        ) {
+                                            StoreReview.requestReview()
+                                            return
+                                        }
+
+                                        registerPlacement({
+                                            placement: 'LifetimeOffer_1_Show',
+                                            feature: async () => {
+                                                await StoreReview.requestReview()
+                                            },
+                                        }).catch((error) => {
+                                            Sentry.captureException(error)
+                                            console.error(
+                                                'Error registering LifetimeOffer_1_Show for Rate',
+                                                error
+                                            )
+                                        })
+                                    },
+                                },
+                            ])
+                            return
+                        }
+                    }}
+                >
+                    <HeaderTouchableOpacity>
+                        <Ionicons name="ellipsis-horizontal-sharp" size={32} color={COLORS.text} />
+                    </HeaderTouchableOpacity>
                 </ContextMenu>
             ),
             headerSearchBarOptions: {
