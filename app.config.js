@@ -33,9 +33,6 @@ module.exports = ({ config }) => {
                 },
                 SKIncludeConsumableInAppPurchaseHistory: true,
             },
-            entitlements: {
-                'com.apple.security.application-groups': [process.env.EXPO_PUBLIC_WIDGET_GROUP],
-            },
         },
 
         androidNavigationBar: {
@@ -48,7 +45,7 @@ module.exports = ({ config }) => {
                 foregroundImage: './assets/icon.png',
                 backgroundColor: '#0A0A0A',
             },
-            // googleServicesFile: './google-services.json',
+            googleServicesFile: './google-services.json',
             playStoreUrl: process.env.EXPO_PUBLIC_ANDROID_STORE_URL,
             predictiveBackGestureEnabled: false,
         },
@@ -68,6 +65,42 @@ module.exports = ({ config }) => {
                 },
             ],
             './plugins/withAndroidHeap',
+            [
+                './plugins/withAndroidWidget',
+                {
+                    src: 'targets/widget-android',
+                    distPlaceholder: 'package_name',
+                    widgets: [
+                        {
+                            title: 'Server Logs',
+                            resource: '@xml/large_logs_widget',
+                            receiverName: 'LargeLogsWidgetReceiver',
+                            configurationActivity: 'LargeLogsConfigurationActivity',
+                        },
+                        {
+                            title: 'Collection Stats',
+                            resource: '@xml/medium_stats_widget',
+                            receiverName: 'MediumStatsWidgetReceiver',
+                            configurationActivity: 'MediumStatsConfigurationActivity',
+                        },
+                        {
+                            title: 'Project Shortcut',
+                            resource: '@xml/small_shortcut_widget',
+                            receiverName: 'SmallShortcutWidgetReceiver',
+                            configurationActivity: 'SmallShortcutConfigurationActivity',
+                        },
+                    ],
+                    versions: {
+                        glance: '1.1.0',
+                        gson: '2.10.1',
+                        activityCompose: '1.9.0',
+                        composeUi: '1.6.7',
+                        material3: '1.2.1',
+                        workRuntime: '2.9.0',
+                        kotlinExtension: '1.5.14',
+                    },
+                },
+            ],
             'expo-router',
             [
                 'expo-splash-screen',
@@ -87,35 +120,6 @@ module.exports = ({ config }) => {
                     organization: process.env.EXPO_PUBLIC_SENTRY_ORG,
                 },
             ],
-            'expo-font',
-            'expo-web-browser',
-            [
-                'expo-alternate-app-icons',
-                [
-                    {
-                        name: 'DatabaseDark',
-                        ios: './assets/icon-db-dark.png',
-                        android: {
-                            foregroundImage: './assets/icon-db-dark.png',
-                        },
-                    },
-                    {
-                        name: 'DatabaseLight',
-                        ios: './assets/icon-db-light.png',
-                        android: {
-                            foregroundImage: './assets/icon-db-light.png',
-                        },
-                    },
-                    {
-                        name: 'Gopher',
-                        ios: './assets/icon-gopher.png',
-                        android: {
-                            foregroundImage: './assets/icon-gopher.png',
-                        },
-                    },
-                ],
-            ],
-            '@bacons/apple-targets',
         ],
 
         experiments: {
