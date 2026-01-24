@@ -33,6 +33,9 @@ module.exports = ({ config }) => {
                 },
                 SKIncludeConsumableInAppPurchaseHistory: true,
             },
+            entitlements: {
+                'com.apple.security.application-groups': [process.env.EXPO_PUBLIC_WIDGET_GROUP],
+            },
         },
 
         androidNavigationBar: {
@@ -45,7 +48,7 @@ module.exports = ({ config }) => {
                 foregroundImage: './assets/icon.png',
                 backgroundColor: '#0A0A0A',
             },
-            googleServicesFile: './google-services.json',
+            //googleServicesFile: './google-services.json',
             playStoreUrl: process.env.EXPO_PUBLIC_ANDROID_STORE_URL,
             predictiveBackGestureEnabled: false,
         },
