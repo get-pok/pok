@@ -15,15 +15,15 @@ import androidx.glance.material3.ColorProviders
 import androidx.glance.unit.ColorProvider
 
 // Shared colors
-val green500 = Color(0xFF31A855)
-val red500 = Color(0xFFFE4E5C)
-val yellow500 = Color(0xFFFBB13D)
+val green500 = Color(0xFF32AD84)
+val red500 = Color(0xFFE34562)
+val yellow500 = Color(0xFFFF944D)
 val white = Color(0xFFFFFFFF)
 val black = Color(0xFF000000)
-val neutral200 = Color(0xFFE6ECF2)
+val neutral200 = Color(0xFFA49B8F)
 
-val bgApp = Color(0xFF0D0C11)
-val bgDark = Color(0xFF161521)
+val bgApp = Color(0xFF181A1B)
+val bgDark = Color(0xFF1C1E1F)
 
 // Light colors
 private val LightColorPalette = lightColorScheme(

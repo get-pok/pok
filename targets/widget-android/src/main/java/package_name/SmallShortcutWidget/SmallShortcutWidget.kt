@@ -63,9 +63,8 @@ fun SmallShortcutContent() {
     val context = LocalContext.current
     
     // Deep Link Logic
-    // pok://collection/<collectionId>?serverId=<serverId>
     val deepLink = if (config != null) {
-        "pok://collection/${config.collectionId}?serverId=${config.connectionId}"
+        getAppDeepLink(context, config.connectionId, "collection/${config.collectionId}")
     } else {
         "pok://"
     }

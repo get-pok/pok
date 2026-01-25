@@ -77,14 +77,24 @@ fun MediumStatsWidgetContent() {
         stateJson?.let { Gson().fromJson(it, StatsWidgetState::class.java) }
     } catch (e: Exception) { null }
     
-    val context = LocalContext.current
+    // Deep Link Logic
+    val deepLink = if (config != null) {
+        getAppDeepLink(context, config.connectionId, "")
+    } else {
+        "pok://"
+    }
+
+    val intent = android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(deepLink)).apply {
+        setComponent(ComponentName("com.pok.mobile", "com.pok.mobile.MainActivity"))
+        flags = android.content.Intent.FLAG_ACTIVITY_NEW_TASK or android.content.Intent.FLAG_ACTIVITY_CLEAR_TOP
+    }
 
     Box(
         modifier = GlanceModifier
             .fillMaxSize()
             .background(GlanceTheme.colors.background)
             .cornerRadius(12.dp)
-            .clickable(onClick = actionStartActivity(android.content.Intent().setComponent(ComponentName("com.pok.mobile", "com.pok.mobile.MainActivity")))),
+            .clickable(onClick = actionStartActivity(intent)),
         contentAlignment = Alignment.TopStart
     ) {
         if (!isSubscribed) {

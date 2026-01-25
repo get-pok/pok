@@ -41,19 +41,20 @@ fun formatCompactCount(value: Int): String {
 /**
  * Generate deep link to the app
  */
-fun getAppDeepLink(context: Context, serverId: String?): String {
-    if (serverId == null) {
+fun getAppDeepLink(context: Context, connectionId: String?, path: String): String {
+    if (connectionId == null) {
         return "pok://"
     }
     
     val prefs = context.getSharedPreferences(APP_GROUP_NAME, Context.MODE_PRIVATE)
     val isSubscribed = prefs.getBoolean(IS_SUBSCRIBED_KEY, false)
     
-    if (isSubscribed) {
-        return "pok://collections?serverId=$serverId"
+    return if (isSubscribed) {
+        val separator = if (path.contains("?")) "&" else "?"
+        "pok://$path${separator}_widgetConnectionId=$connectionId"
+    } else {
+        "pok://?showPaywall=1"
     }
-    
-    return "pok://?showPaywall=1"
 }
 
 /**
@@ -73,7 +74,7 @@ class OpenDeepLinkAction : ActionCallback {
         parameters: ActionParameters
     ) {
         val serverId = parameters[ServerIdKey]
-        val deepLink = getAppDeepLink(context, serverId)
+        val deepLink = getAppDeepLink(context, serverId, "")
         Log.d("OpenDeepLinkAction", "Opening deep link: $deepLink")
         
         try {
