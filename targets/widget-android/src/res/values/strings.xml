@@ -1,0 +1,5 @@
+<resources>
+    <string name="large_logs_widget_description">Displays the latest logs from your PocketBase server.</string>
+    <string name="medium_stats_widget_description">Shows item counts for selected collections.</string>
+    <string name="small_shortcut_widget_description">Quickly open a specific collection.</string>
+</resources>

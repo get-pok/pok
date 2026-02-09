@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<appwidget-provider xmlns:android="http://schemas.android.com/apk/res/android"
+    android:initialLayout="@layout/sample_widget"
+    android:previewImage="@drawable/logs_preview"
+    android:minWidth="320dp"
+    android:minHeight="180dp"
+    android:targetCellWidth="4"
+    android:targetCellHeight="3"
+    android:updatePeriodMillis="900000"
+    android:description="@string/large_logs_widget_description"
+    android:widgetCategory="home_screen"
+    android:configure="package_name.LargeLogsConfigurationActivity"
+    android:widgetFeatures="reconfigurable"
+/>
+
