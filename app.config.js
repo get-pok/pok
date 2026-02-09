@@ -55,6 +55,12 @@ module.exports = ({ config }) => {
 
         plugins: [
             [
+                '@hot-updater/react-native',
+                {
+                    channel: 'production',
+                },
+            ],
+            [
                 'expo-build-properties',
                 {
                     ios: {
@@ -116,6 +122,17 @@ module.exports = ({ config }) => {
                 ],
             ],
             '@bacons/apple-targets',
+            'expo-asset',
+            'expo-image',
+            'expo-video',
+            'expo-sharing',
+            [
+                'expo-audio',
+                {
+                    microphonePermission: false,
+                    recordAudioAndroid: false,
+                },
+            ],
         ],
 
         experiments: {

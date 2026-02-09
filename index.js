@@ -1,4 +1,5 @@
 import 'expo-router/entry'
+import './lib/prebundle'
 import * as SplashScreen from 'expo-splash-screen'
 import { setBackgroundColorAsync } from 'expo-system-ui'
 import { Text, TextInput } from 'react-native'

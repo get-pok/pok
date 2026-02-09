@@ -43,6 +43,7 @@ android/
 
 *.apk
 *.aab
+!keys/
 
 # widgets
 !modules/widgetkit/ios

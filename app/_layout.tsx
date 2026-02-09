@@ -2,6 +2,7 @@ import { WidgetSyncer } from '@/components/base/WidgetSyncer'
 import { queryClient } from '@/lib/query'
 import { mmkvStorage } from '@/lib/storage'
 import { COLORS } from '@/theme/colors'
+import { HotUpdater } from '@hot-updater/react-native'
 import * as Sentry from '@sentry/react-native'
 import { createSyncStoragePersister } from '@tanstack/query-sync-storage-persister'
 import { PersistQueryClientProvider } from '@tanstack/react-query-persist-client'
@@ -214,4 +215,8 @@ function RootLayout() {
     )
 }
 
-export default RootLayout
+export default HotUpdater.wrap({
+    baseURL: `${process.env.EXPO_PUBLIC_HOT_UPDATER_CLOUDFLARE_URL}/api/check-update`,
+    updateStrategy: 'fingerprint',
+    updateMode: 'auto',
+})(RootLayout)
